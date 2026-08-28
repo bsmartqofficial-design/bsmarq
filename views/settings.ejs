@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settings | BsmartQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="auth-page">
+    <main class="auth-shell">
+      <div class="auth-brand">
+        <img class="brand-logo" src="/images/file_00000000c0ec81f48652b42d6ca52a4d.png" alt="BsmartQ">
+      </div>
+      <section class="auth-card">
+        <p class="eyebrow">ORGANIZATION SETTINGS</p>
+        <h1>Account security</h1>
+        <p class="auth-copy">
+          Change the administrator password for <%= user.organization_name %>.
+        </p>
+        <% if (error) { %>
+        <div class="form-error"><%= error %></div>
+        <% } %><% if (success) { %>
+        <div
+          class="form-error"
+          style="background: #e8f5e9; color: #0f5132; border-color: #acdcbf"
+        >
+          <%= success %>
+        </div>
+        <% } %>
+        <form method="post" action="/settings/password">
+          <label
+            >Current password<input
+              type="password"
+              name="currentPassword"
+              autocomplete="current-password"
+              required /></label
+          ><label
+            >New password<input
+              type="password"
+              name="newPassword"
+              minlength="8"
+              autocomplete="new-password"
+              placeholder="At least 8 characters"
+              required /></label
+          ><button class="button primary full" type="submit">
+            Change admin password
+          </button>
+        </form>
+        <p class="auth-footer">
+          <a href="/dashboard">Back to portal</a> ·
+          <a href="/staff">Staff and counters</a>
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

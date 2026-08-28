@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Register organization | BsmartQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="auth-page">
+  <main class="auth-shell register-shell">
+    <div class="auth-brand"><img class="brand-logo" src="/images/file_00000000c0ec81f48652b42d6ca52a4d.png" alt="BsmartQ"></div>
+    <section class="auth-card register-card">
+      <p class="eyebrow">START YOUR WORKSPACE</p>
+      <h1>Build a smarter queue.</h1>
+      <p class="auth-copy">Create your organization workspace and invite your team when you're ready.</p>
+      <% if (error) { %><div class="form-error"><%= error %></div><% } %>
+      <form method="post" action="/register">
+        <div class="form-grid">
+          <label>Organization name<input name="organizationName" value="<%= values.organizationName || '' %>" placeholder="e.g. ABC Bank" required></label>
+          <label>Organization type
+            <select name="organizationType" required>
+              <option value="">Select a type</option>
+              <% ['Banking & Finance','Healthcare','Government Office','School & University','Telecom','Restaurant & Food Service','Service & Repair Center','Embassy & Consulate','Insurance','Supermarket & Retail','NGO','Legal & Law Firm','Post Office & Courier','Other'].forEach((type) => { %>
+                <option value="<%= type %>" <%= values.organizationType === type ? 'selected' : '' %>><%= type %></option>
+              <% }) %>
+            </select>
+          </label>
+        </div>
+        <label>Primary branch<input name="branchName" value="<%= values.branchName || '' %>" placeholder="e.g. Kampala Main Branch" required></label>
+        <div class="form-divider">Administrator account</div>
+        <div class="form-grid">
+          <label>Full name<input name="fullName" value="<%= values.fullName || '' %>" placeholder="Your full name" required></label>
+          <label>Work email<input type="email" name="email" value="<%= values.email || '' %>" placeholder="you@organization.com" required></label>
+        </div>
+        <label>Password<input type="password" name="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters" required></label>
+        <button class="button primary full" type="submit">Create organization workspace</button>
+      </form>
+      <p class="auth-footer">Already have access? <a href="/login">Sign in</a></p>
+    </section>
+  </main>
+</body>
+</html>
