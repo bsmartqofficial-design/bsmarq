@@ -22,6 +22,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 const port = Number(process.env.PORT) || 3000;
+let databaseStatus = { connected: false, initialized: false, message: null };
 const sessionMiddleware = session({
   store: new pgSession({ pool, createTableIfMissing: true }),
   secret: process.env.SESSION_SECRET || 'bsmarq-development-secret',
@@ -312,8 +313,15 @@ app.post('/api/tickets/:number/:action', requireStaff, async (req, res, next) =>
   } catch (error) { next(error); }
 });
 app.get('/api/health', async (req, res) => {
-  try { await pool.query('SELECT 1'); res.json({ status: 'ok', database: 'connected' }); }
-  catch (error) { res.status(503).json({ status: 'error', database: 'unavailable', message: error.message }); }
+  try {
+    await pool.query('SELECT 1');
+    databaseStatus.connected = true;
+    res.json({ status: 'ok', database: 'connected', initialized: databaseStatus.initialized, message: databaseStatus.message || 'Database reachable' });
+  } catch (error) {
+    databaseStatus.connected = false;
+    databaseStatus.message = error.message;
+    res.status(503).json({ status: 'error', database: 'unavailable', initialized: databaseStatus.initialized, message: error.message });
+  }
 });
 io.on('connection', async (socket) => {
   try {
@@ -322,14 +330,33 @@ io.on('connection', async (socket) => {
     socket.emit('queue:update', (await queries.loadDashboard(organizationId)).tickets);
   } catch (error) { socket.emit('queue:error', { message: 'Database unavailable' }); }
 });
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`Port ${port} is already in use. Stop the other process or change PORT before starting BsmartQ.`);
+    process.exit(1);
+  }
+  throw error;
+});
+
 server.listen(port, '0.0.0.0', async () => {
   try {
     await pool.query('SELECT 1');
-    await queries.ensureSuperAdmin();
-    console.log(`BsmartQ connected to PostgreSQL at http://0.0.0.0:${port}`);
+    databaseStatus.connected = true;
+    try {
+      await queries.ensureSuperAdmin();
+      databaseStatus.initialized = true;
+      console.log(`BsmartQ connected to PostgreSQL and is ready at http://0.0.0.0:${port}`);
+    } catch (initError) {
+      databaseStatus.message = initError.message;
+      console.warn(`BsmartQ started without the required database bootstrap: ${initError.message}`);
+      console.warn('Run "npm run db:init" once the PostgreSQL schema is available.');
+    }
   }
   catch (error) {
-    console.error(`BsmartQ requires PostgreSQL: ${error.message}`);
-    process.exitCode = 1;
+    databaseStatus.connected = false;
+    databaseStatus.message = error.message;
+    console.warn(`BsmartQ started in degraded mode because PostgreSQL is unavailable: ${error.message}`);
+    console.warn('The app will continue to run, but database-backed routes will return errors until PostgreSQL is reachable.');
+    console.log(`BsmartQ web server is running at http://0.0.0.0:${port}`);
   }
 });

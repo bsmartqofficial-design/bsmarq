@@ -6,10 +6,17 @@ const poolConfig = {
   idleTimeoutMillis: 30000,
 };
 
-if (process.env.DATABASE_URL) {
+const hasLocalDbConfig = Boolean(
+  process.env.DB_HOST ||
+  process.env.DB_NAME ||
+  process.env.DB_USER ||
+  process.env.DB_PASSWORD
+);
+
+if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL) {
   poolConfig.connectionString = process.env.DATABASE_URL;
   poolConfig.ssl = { rejectUnauthorized: false };
-} else {
+} else if (hasLocalDbConfig || !process.env.DATABASE_URL || !process.env.DATABASE_URL.trim()) {
   Object.assign(poolConfig, {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,
@@ -17,6 +24,9 @@ if (process.env.DATABASE_URL) {
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD
   });
+} else if (process.env.DATABASE_URL) {
+  poolConfig.connectionString = process.env.DATABASE_URL;
+  poolConfig.ssl = { rejectUnauthorized: false };
 }
 
 const pool = new Pool(poolConfig);
