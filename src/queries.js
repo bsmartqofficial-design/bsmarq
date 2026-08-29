@@ -368,6 +368,44 @@ async function updateTicket(ticketNumber, action, organizationId) {
   return formatTicket({ ...updated.rows[0], service_name: result.rows[0].service_name, counter_name: result.rows[0].counter_name });
 }
 
+async function listUserNotifications(userId, organizationId) {
+  const result = await pool.query(`
+    SELECT n.id, n.title, n.message, n.created_at, n.is_global, n.type,
+           o.name AS organization_name,
+           u.full_name AS created_by_name
+    FROM notifications n
+    LEFT JOIN organizations o ON o.id = n.organization_id
+    LEFT JOIN users u ON u.id = n.created_by
+    WHERE (
+      n.is_global = TRUE
+      OR n.user_id = $1
+      OR (n.organization_id = $2 AND n.organization_id IS NOT NULL)
+    )
+    ORDER BY n.created_at DESC
+    LIMIT 20
+  `, [userId, organizationId]);
+  return result.rows;
+}
+
+async function createSystemNotification({ title, message, userId, organizationId = null, isGlobal = false }) {
+  const result = await pool.query(`
+    INSERT INTO notifications (title, message, user_id, organization_id, is_global, type, created_by, created_at)
+    VALUES ($1, $2, $3, $4, $5, 'system', $6, NOW())
+    RETURNING *
+  `, [title, message, userId || null, organizationId || null, Boolean(isGlobal), userId || null]);
+  return result.rows[0] || null;
+}
+
+async function markNotificationsRead(userId, organizationId) {
+  await pool.query(`
+    UPDATE notifications
+    SET read_at = NOW()
+    WHERE (user_id = $1 OR (organization_id = $2 AND organization_id IS NOT NULL))
+      AND read_at IS NULL
+  `, [userId, organizationId]);
+  return true;
+}
+
 async function listOrganizationsForAdmin() {
   const result = await pool.query(`
     SELECT o.id, o.name, o.type, o.status, o.subscription, o.approved_at, o.created_at,
@@ -433,5 +471,8 @@ module.exports = {
   rejectOrganization,
   updateOrganizationSubscription,
   getOrganizationSubscription,
+  listUserNotifications,
+  createSystemNotification,
+  markNotificationsRead,
   subscriptionPlans
 };

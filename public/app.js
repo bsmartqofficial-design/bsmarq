@@ -10,6 +10,29 @@ const branchSelect = document.getElementById('branchSelect');
 const aiChatForm = document.getElementById('aiChatForm');
 const aiMessage = document.getElementById('aiMessage');
 const aiChatMessages = document.getElementById('aiChatMessages');
+const dashboardSearch = document.getElementById('dashboardSearch');
+const searchWrap = document.getElementById('searchWrap');
+const notificationPanel = document.getElementById('notificationPanel');
+
+function filterDashboardSearch() {
+  if (!dashboardSearch) return;
+  const term = dashboardSearch.value.trim().toLowerCase();
+  const rows = document.querySelectorAll('.live-ticket-row, .service-row');
+  rows.forEach((row) => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(term) || !term ? '' : 'none';
+  });
+  const noResult = document.getElementById('searchNoResult');
+  if (noResult) noResult.remove();
+  if (term && [...rows].every((row) => row.style.display === 'none')) {
+    const empty = document.createElement('div');
+    empty.id = 'searchNoResult';
+    empty.className = 'empty-ticket-list';
+    empty.textContent = 'No matching records found';
+    const target = document.getElementById('liveTickets') || document.querySelector('.service-list');
+    if (target) target.appendChild(empty);
+  }
+}
 
 document.querySelectorAll('.wait-bar i[data-width]').forEach((bar) => {
   bar.style.width = `${bar.dataset.width}%`;
@@ -58,9 +81,21 @@ if (callNext) callNext.addEventListener('click', async () => {
   callNext.innerHTML = '⌁ &nbsp; Call next customer';
 });
 if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
-if (searchToggle) searchToggle.addEventListener('click', () => searchToggle.classList.toggle('active'));
+if (searchToggle) searchToggle.addEventListener('click', () => {
+  searchToggle.classList.toggle('active');
+  if (searchWrap) searchWrap.classList.toggle('hidden');
+  if (!searchWrap.classList.contains('hidden') && dashboardSearch) dashboardSearch.focus();
+});
+if (dashboardSearch) dashboardSearch.addEventListener('input', filterDashboardSearch);
 if (branchSelect) branchSelect.addEventListener('click', () => branchSelect.classList.toggle('active'));
-if (notificationToggle) notificationToggle.addEventListener('click', () => notificationToggle.classList.toggle('active'));
+if (notificationToggle) notificationToggle.addEventListener('click', () => {
+  notificationToggle.classList.toggle('active');
+  if (notificationPanel) notificationPanel.classList.toggle('hidden');
+  notificationToggle.title = notificationToggle.classList.contains('active') ? 'Notifications viewed' : 'Notifications';
+  if (notificationPanel && !notificationPanel.classList.contains('hidden')) {
+    fetch('/api/notifications/read', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).catch(() => undefined);
+  }
+});
 document.querySelectorAll('.more, .panel-head .icon-btn').forEach((button) => {
   if (button !== menuToggle && button !== notificationToggle) button.addEventListener('click', () => button.classList.toggle('active'));
 });

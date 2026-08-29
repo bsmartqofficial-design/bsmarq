@@ -21,6 +21,18 @@
         <% if (error) { %><div class="form-error"><%= error %></div><% } %>
         <% if (success) { %><div class="form-success"><%= success %></div><% } %>
 
+        <form method="post" action="/super-admin/message" class="broadcast-form">
+          <label>
+            Update title
+            <input type="text" name="title" placeholder="System update" maxlength="80" />
+          </label>
+          <label>
+            Broadcast message
+            <textarea name="message" rows="4" placeholder="Send a platform update to all staff users..." required></textarea>
+          </label>
+          <button type="submit" class="button primary full">Send system message</button>
+        </form>
+
         <div class="super-admin-summary">
           <h2>Registered organizations</h2>
           <% if (organizations.length === 0) { %>

@@ -521,6 +521,26 @@ a {
   font-size: 9px;
   margin-top: 3px;
 }
+.small-admin-contact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(136, 223, 174, 0.12);
+  border: 1px solid rgba(136, 223, 174, 0.5);
+  color: #dff9ea;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-decoration: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.small-admin-contact:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
 .profile {
   display: flex;
   align-items: center;

@@ -127,6 +127,7 @@ app.post('/register', async (req, res) => {
 app.get('/', requireStaff, async (req, res, next) => {
   try {
     const demo = await queries.loadDashboard(req.session.user.organization_id);
+    const notifications = await queries.listUserNotifications(req.session.user.id, req.session.user.organization_id);
     res.render('dashboard', {
       page: 'Overview',
       demo,
@@ -134,7 +135,8 @@ app.get('/', requireStaff, async (req, res, next) => {
       portal: getPortalProfile(demo.organization.type),
       user: req.session.user,
       plans: subscriptionPlanList,
-      activeSubscription: demo.organization.subscription || 'free_trial'
+      activeSubscription: demo.organization.subscription || 'free_trial',
+      notifications
     });
   } catch (error) { next(error); }
 });
@@ -166,6 +168,19 @@ app.get('/super-admin', requireSuperAdmin, async (req, res) => {
     res.status(500).render('super-admin', { user: req.session.user, organizations: [], error: 'Unable to load organizations.', success: null });
   }
 });
+app.post('/super-admin/message', requireSuperAdmin, async (req, res) => {
+  const title = String(req.body.title || '').trim() || 'System update';
+  const message = String(req.body.message || '').trim();
+  if (!message) {
+    return res.redirect('/super-admin?error=Message+cannot+be+empty');
+  }
+  try {
+    await queries.createSystemNotification({ title, message, userId: req.session.user.id, isGlobal: true });
+    return res.redirect('/super-admin?success=Platform+message+sent');
+  } catch (error) {
+    return res.redirect('/super-admin?error=Unable+to+send+message');
+  }
+});
 app.post('/super-admin/:organizationId/approve', requireSuperAdmin, async (req, res) => {
   try {
     await queries.approveOrganization(req.params.organizationId);
@@ -188,6 +203,24 @@ app.post('/super-admin/:organizationId/subscription', requireSuperAdmin, async (
     res.redirect('/super-admin?success=Subscription+updated');
   } catch (error) {
     res.redirect('/super-admin?error=Unable+to+update+subscription');
+  }
+});
+
+app.get('/api/notifications', requireStaff, async (req, res) => {
+  try {
+    const notifications = await queries.listUserNotifications(req.session.user.id, req.session.user.organization_id);
+    res.json({ notifications });
+  } catch (error) {
+    res.status(500).json({ notifications: [], error: 'Unable to load notifications.' });
+  }
+});
+
+app.post('/api/notifications/read', requireStaff, async (req, res) => {
+  try {
+    await queries.markNotificationsRead(req.session.user.id, req.session.user.organization_id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Unable to mark notifications as read.' });
   }
 });
 

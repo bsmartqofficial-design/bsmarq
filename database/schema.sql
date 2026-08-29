@@ -12,9 +12,14 @@ CREATE TABLE IF NOT EXISTS queue_tickets (id UUID PRIMARY KEY DEFAULT gen_random
 CREATE TABLE IF NOT EXISTS appointments (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE, branch_id UUID NOT NULL REFERENCES branches(id), service_id UUID NOT NULL REFERENCES services(id), customer_name VARCHAR(160) NOT NULL, customer_email VARCHAR(180), starts_at TIMESTAMPTZ NOT NULL, status VARCHAR(20) DEFAULT 'booked', created_at TIMESTAMPTZ DEFAULT NOW());
 CREATE TABLE IF NOT EXISTS invitations (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE, email VARCHAR(180) NOT NULL, token_hash TEXT NOT NULL, role VARCHAR(30) NOT NULL, expires_at TIMESTAMPTZ NOT NULL, used_at TIMESTAMPTZ);
 ALTER TABLE invitations ADD COLUMN IF NOT EXISTS counter_id UUID REFERENCES counters(id) ON DELETE SET NULL;
-CREATE TABLE IF NOT EXISTS notifications (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id) ON DELETE CASCADE, ticket_id UUID REFERENCES queue_tickets(id) ON DELETE CASCADE, title VARCHAR(180) NOT NULL, message TEXT NOT NULL, read_at TIMESTAMPTZ, created_at TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS notifications (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id) ON DELETE CASCADE, organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE, ticket_id UUID REFERENCES queue_tickets(id) ON DELETE CASCADE, title VARCHAR(180) NOT NULL, message TEXT NOT NULL, is_global BOOLEAN DEFAULT FALSE, type VARCHAR(30) DEFAULT 'system', created_by UUID REFERENCES users(id) ON DELETE SET NULL, read_at TIMESTAMPTZ, created_at TIMESTAMPTZ DEFAULT NOW());
 CREATE TABLE IF NOT EXISTS ai_insights (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE, title VARCHAR(180) NOT NULL, body TEXT NOT NULL, severity VARCHAR(20) DEFAULT 'info', created_at TIMESTAMPTZ DEFAULT NOW());
 CREATE TABLE IF NOT EXISTS activity_logs (id BIGSERIAL PRIMARY KEY, organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE, user_id UUID REFERENCES users(id) ON DELETE SET NULL, action VARCHAR(120) NOT NULL, metadata JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT NOW());
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS is_global BOOLEAN DEFAULT FALSE;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS type VARCHAR(30) DEFAULT 'system';
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS tickets_org_status_idx ON queue_tickets(organization_id, status);
 CREATE INDEX IF NOT EXISTS tickets_branch_service_idx ON queue_tickets(branch_id, service_id, joined_at);
 CREATE INDEX IF NOT EXISTS appointments_org_date_idx ON appointments(organization_id, starts_at);
+CREATE INDEX IF NOT EXISTS notifications_user_created_idx ON notifications(user_id, organization_id, created_at DESC);
