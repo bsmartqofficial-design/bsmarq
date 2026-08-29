@@ -253,7 +253,15 @@ app.get('/staff', requireAdmin, async (req, res, next) => {
   try {
     const people = await queries.listStaffAndCounters(req.session.user.organization_id);
     res.render('staff', { user: req.session.user, ...people, inviteLink: null, error: null });
-  } catch (error) { next(error); }
+  } catch (error) {
+    res.status(500).render('staff', {
+      user: req.session.user,
+      staff: [],
+      counters: [],
+      inviteLink: null,
+      error: 'Staff and counters are unavailable right now. Please check the database connection.'
+    });
+  }
 });
 app.post('/staff/invitations', requireAdmin, async (req, res, next) => {
   try {
