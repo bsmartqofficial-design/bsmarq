@@ -1,4 +1,5 @@
 require('dotenv').config();
+const fs = require('fs');
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -9,6 +10,17 @@ const QRCode = require('qrcode');
 const pool = require('./db');
 const queries = require('./queries');
 const { askGemini } = require('./ai');
+
+const viewDir = fs.existsSync(path.join(__dirname, 'views'))
+  ? path.join(__dirname, 'views')
+  : fs.existsSync(path.join(__dirname, '../views'))
+    ? path.join(__dirname, '../views')
+    : __dirname;
+const publicDir = fs.existsSync(path.join(__dirname, 'public'))
+  ? path.join(__dirname, 'public')
+  : fs.existsSync(path.join(__dirname, '../public'))
+    ? path.join(__dirname, '../public')
+    : __dirname;
 
 const subscriptionPlanList = queries.subscriptionPlans || [
   { key: 'free_trial', label: '1 day free trial', days: 1, price: 0, description: 'Free trial' },
@@ -49,10 +61,10 @@ const sessionMiddleware = session({
   }
 });
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, '../views'));
+app.set('views', viewDir);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(publicDir));
 app.use(sessionMiddleware);
 io.engine.use(sessionMiddleware);
 
@@ -377,4 +389,8 @@ server.listen(port, '0.0.0.0', async () => {
     console.warn('The app will continue to run, but database-backed routes will return errors until PostgreSQL is reachable.');
     console.log(`BsmartQ web server is running at http://0.0.0.0:${port}`);
   }
+});
+
+app.use((req, res) => {
+  res.status(404).send('Page not found');
 });
