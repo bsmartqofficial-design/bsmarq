@@ -19,8 +19,22 @@ const subscriptionPlanList = queries.subscriptionPlans || [
 ];
 
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
-const io = new Server(server);
+const allowedOrigins = [
+  process.env.CORS_ORIGIN,
+  process.env.PUBLIC_BASE_URL,
+  process.env.APP_URL,
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+].filter(Boolean);
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins.length ? allowedOrigins : true,
+    credentials: true,
+    methods: ['GET', 'POST']
+  }
+});
 const port = Number(process.env.PORT) || 3000;
 let databaseStatus = { connected: false, initialized: false, message: null };
 const sessionMiddleware = session({
@@ -28,7 +42,11 @@ const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'bsmarq-development-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 86400000, secure: process.env.NODE_ENV === 'production' }
+  cookie: {
+    maxAge: 86400000,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  }
 });
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
