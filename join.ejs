@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Join queue | BsmartQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="public-page">
+    <div class="public-nav">
+      <div class="brand dark">
+        <img class="brand-logo" src="/images/file_00000000c0ec81f48652b42d6ca52a4d.png" alt="BsmartQ">
+      </div>
+      <span class="secure">⌁ Secure queue registration</span>
+    </div>
+    <main class="join-wrap">
+      <div class="join-intro">
+        <p class="eyebrow">
+          <%= demo.organization.name %> · <%= demo.organization.branch %>
+        </p>
+        <h1>Skip the line.<br /><em>Own your time.</em></h1>
+        <p>Join a queue remotely and we’ll let you know when it’s your turn.</p>
+      </div>
+      <div class="join-card">
+        <% if (ticket) { %>
+        <div class="success-mark">✓</div>
+        <p class="eyebrow">YOUR DIGITAL TICKET</p>
+        <h2><%= ticket.number %></h2>
+        <div class="ticket-summary">
+          <b><%= ticket.service %></b
+          ><span
+            ><%= demo.organization.name %> · <%= demo.organization.branch
+            %></span
+          >
+        </div>
+        <div class="ticket-metrics">
+          <div>
+            <small>People ahead</small
+            ><strong id="ticketAhead"><%= ticket.peopleAhead ?? 0 %></strong>
+          </div>
+          <div>
+            <small>Est. wait</small
+            ><strong><%= ticket.waited || 'Calculating' %></strong>
+          </div>
+          <div>
+            <small>Status</small
+            ><strong class="green-text" id="ticketStatus"
+              ><%= ticket.status || 'Waiting' %></strong
+            >
+          </div>
+        </div>
+        <% if (ticket.qrCode) { %>
+        <div class="ticket-qr">
+          <img
+            src="<%= ticket.qrCode %>"
+            alt="QR code for tracking ticket <%= ticket.number %>"
+          /><small>Scan to track this ticket</small>
+        </div>
+        <% } %>
+        <a class="button secondary full" href="<%= ticket.trackingUrl %>"
+          >Open live tracker</a
+        >
+        <button
+          class="button primary full"
+          onclick="
+            window.location = '/join?organizationId=<%= demo.organization.id %>'
+          "
+        >
+          Track my queue →</button
+        ><% } else { %>
+        <div class="card-head">
+          <span class="step">1 of 2</span>
+          <h2>Join a queue</h2>
+          <p>Select a service and tell us who’s joining.</p>
+        </div>
+        <form method="post">
+          <input
+            type="hidden"
+            name="organizationId"
+            value="<%= demo.organization.id %>"
+          />
+          <label
+            >Your name<input
+              name="customer"
+              placeholder="e.g. Sarah Namirembe"
+              required /></label
+          ><label
+            >What do you need help with?<select name="service">
+              <% demo.services.forEach((service) => { %>
+              <option value="<%= service.prefix %>">
+                <%= service.name %> · ~<%= service.wait %> wait
+              </option>
+              <% }) %>
+            </select></label
+          ><label
+            >Mobile number <span class="optional">Optional</span
+            ><input name="phone" placeholder="+256 7XX XXX XXX" /></label
+          ><button class="button primary full">
+            Get my ticket <span>→</span>
+          </button>
+        </form>
+        <p class="form-note">
+          By continuing, you agree to receive queue notifications.
+        </p>
+        <% } %>
+      </div>
+    </main>
+  </body>
+  <% if (ticket) { %>
+  <script>
+    window.organizationId = "<%= demo.organization.id %>";
+    window.trackedTicket = "<%= ticket.number %>";
+  </script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/app.js"></script>
+  <% } %>
+</html>

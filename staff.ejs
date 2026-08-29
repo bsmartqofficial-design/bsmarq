@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Staff and counters | BsmartQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="auth-page">
+    <main class="auth-shell register-shell">
+      <div class="auth-brand">
+        <img class="brand-logo" src="/images/file_00000000c0ec81f48652b42d6ca52a4d.png" alt="BsmartQ">
+      </div>
+      <section class="auth-card">
+        <p class="eyebrow">TEAM ACCESS</p>
+        <h1>Staff and counters</h1>
+        <p class="auth-copy">
+          Invite a team member and assign their service counter before they sign
+          in.
+        </p>
+        <% if (error) { %>
+        <div class="form-error"><%= error %></div>
+        <% } %><% if (inviteLink) { %>
+        <div
+          class="form-error"
+          style="background: #e8f5e9; color: #0f5132; border-color: #acdcbf"
+        >
+          <b>Invitation ready</b><br /><input
+            value="<%= inviteLink %>"
+            readonly
+            onclick="this.select()"
+          /><small
+            >Send this link to the staff member. It expires in 7 days.</small
+          >
+        </div>
+        <% } %>
+        <form method="post" action="/staff/invitations">
+          <label
+            >Staff email<input
+              type="email"
+              name="email"
+              placeholder="staff@organization.com"
+              required /></label
+          ><label
+            >Assign counter<select name="counterId">
+              <option value="">Assign later</option>
+              <% counters.forEach((counter) => { %>
+              <option value="<%= counter.id %>">
+                <%= counter.name %> · <%= counter.status %>
+              </option>
+              <% }) %>
+            </select></label
+          ><button class="button primary full" type="submit">
+            Generate staff invitation link
+          </button>
+        </form>
+        <div class="form-divider">Current team</div>
+        <% staff.forEach((person) => { %>
+        <p>
+          <b><%= person.full_name %></b><br /><small
+            ><%= person.email %> · <%= person.counter_name || 'No counter
+            assigned' %></small
+          ><form method="post" action="/staff/<%= person.id %>/delete" style="display:inline"><button class="button small secondary" type="submit">Delete staff</button></form>
+        </p>
+        <% }) %>
+        <div class="form-divider">Counters</div>
+        <% counters.forEach((counter) => { %>
+        <p>
+          <b><%= counter.name %></b> · <%= counter.status %><br /><small
+            ><%= counter.staff_name || 'Available for assignment' %></small
+          >
+        </p>
+        <% }) %>
+        <p class="auth-footer"><a href="/dashboard">Back to portal</a></p>
+      </section>
+    </main>
+  </body>
+</html>

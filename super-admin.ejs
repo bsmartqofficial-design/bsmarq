@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Super Admin | BsmartQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="auth-page">
+    <main class="auth-shell register-shell">
+      <div class="auth-brand">
+        <img class="brand-logo" src="/images/file_00000000c0ec81f48652b42d6ca52a4d.png" alt="BsmartQ" />
+      </div>
+      <section class="auth-card register-card">
+        <p class="eyebrow">SUPER ADMIN</p>
+        <h1>Control center</h1>
+        <p class="auth-copy">Approve companies, control subscriptions, and manage access before organizations can use the platform.</p>
+
+        <% if (error) { %><div class="form-error"><%= error %></div><% } %>
+        <% if (success) { %><div class="form-success"><%= success %></div><% } %>
+
+        <div class="super-admin-summary">
+          <h2>Registered organizations</h2>
+          <% if (organizations.length === 0) { %>
+            <p class="auth-copy">No organizations are waiting for review yet.</p>
+          <% } else { %>
+            <% organizations.forEach((org) => { %>
+              <div class="org-card">
+                <div class="org-header">
+                  <div>
+                    <strong><%= org.name %></strong>
+                    <small><%= org.type %></small>
+                  </div>
+                  <span class="status-badge status-<%= org.status %>"><%= org.status %></span>
+                </div>
+
+                <div class="org-meta">
+                  <p><strong>Admin:</strong> <%= org.admin_name || 'Not assigned' %></p>
+                  <p><strong>Email:</strong> <%= org.admin_email || '—' %></p>
+                  <p><strong>Created:</strong> <%= new Date(org.created_at).toLocaleDateString() %></p>
+                  <% if (org.approved_at) { %>
+                    <p><strong>Approved:</strong> <%= new Date(org.approved_at).toLocaleDateString() %></p>
+                  <% } %>
+                </div>
+
+                <form method="post" action="/super-admin/<%= org.id %>/subscription" class="subscription-form">
+                  <label>
+                    Subscription
+                    <select name="subscription">
+                      <option value="starter" <%= org.subscription === 'starter' ? 'selected' : '' %>>Starter</option>
+                      <option value="pro" <%= org.subscription === 'pro' ? 'selected' : '' %>>Pro</option>
+                      <option value="enterprise" <%= org.subscription === 'enterprise' ? 'selected' : '' %>>Enterprise</option>
+                    </select>
+                  </label>
+                  <button type="submit" class="button secondary">Update</button>
+                </form>
+
+                <div class="org-actions">
+                  <% if (org.status !== 'active') { %>
+                    <form method="post" action="/super-admin/<%= org.id %>/approve">
+                      <button type="submit" class="button primary">Approve</button>
+                    </form>
+                  <% } %>
+                  <% if (org.status !== 'rejected') { %>
+                    <form method="post" action="/super-admin/<%= org.id %>/reject">
+                      <button type="submit" class="button danger">Reject</button>
+                    </form>
+                  <% } %>
+                </div>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+
+        <div class="auth-footer">
+          Signed in as <%= user.full_name %> · <a href="/logout">Log out</a>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

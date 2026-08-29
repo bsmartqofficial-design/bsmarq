@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Accept staff invitation | BsmartQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="auth-page">
+    <main class="auth-shell">
+      <div class="auth-brand">
+        <img class="brand-logo" src="/images/file_00000000c0ec81f48652b42d6ca52a4d.png" alt="BsmartQ">
+      </div>
+      <section class="auth-card">
+        <% if (invitation) { %>
+        <p class="eyebrow">STAFF INVITATION</p>
+        <h1>Join <%= invitation.organization_name %>.</h1>
+        <p class="auth-copy">
+          Create your staff account for <%= invitation.email %> and open your
+          assigned counter portal.
+        </p>
+        <% } %><% if (error) { %>
+        <div class="form-error"><%= error %></div>
+        <% } %><% if (invitation) { %>
+        <form method="post">
+          <label
+            >Full name<input
+              name="fullName"
+              placeholder="Your full name"
+              required /></label
+          ><label
+            >Password<input
+              type="password"
+              name="password"
+              minlength="8"
+              placeholder="At least 8 characters"
+              required /></label
+          ><button class="button primary full" type="submit">
+            Join staff portal
+          </button>
+        </form>
+        <% } %>
+      </section>
+    </main>
+  </body>
+</html>

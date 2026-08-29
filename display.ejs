@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Public display | BsmartQ</title>
+	<link rel="stylesheet" href="/styles.css">
+</head>
+<body class="display-page">
+	<header>
+		<div class="brand"><img class="brand-logo" src="/images/file_00000000c0ec81f48652b42d6ca52a4d.png" alt="BsmartQ"></div>
+		<div><b><%= demo.organization.name %></b><small><%= portal.label %> · <%= demo.organization.branch %></small></div>
+		<span class="display-live"><i></i> LIVE</span>
+	</header>
+	<main class="display-main">
+		<section class="now-serving">
+			<p class="display-label">NOW SERVING</p>
+			<div class="display-number"><%= tickets[0] ? tickets[0].number : '—' %></div>
+			<div class="display-counter"><%= tickets[0] ? tickets[0].counter : 'No active counter' %></div>
+			<p class="display-service"><%= tickets[0] ? tickets[0].service : 'Please wait' %></p>
+		</section>
+		<aside class="waiting-board">
+			<p class="display-label">UP NEXT</p>
+			<% tickets.slice(1, 4).forEach((ticket) => { %>
+				<div class="next-ticket"><b><%= ticket.number %></b><span><%= ticket.service %></span></div>
+			<% }) %>
+			<% if (tickets.length < 2) { %>
+				<div class="next-ticket empty"><b>—</b><span>No customers waiting</span></div>
+			<% } %>
+		</aside>
+	</main>
+	<footer><span>Thank you for choosing <%= demo.organization.name %></span><span>Waiting: <b><%= demo.stats.waiting %> <%= portal.queueNoun %>s</b> · Avg. wait: <b><%= demo.stats.avgWait %></b></span></footer>
+	<script src="/socket.io/socket.io.js"></script>
+	<script>window.organizationId = '<%= demo.organization.id %>';</script><script src="/app.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,328 @@
+<% const planOptions = Array.isArray(plans) && plans.length ? plans : [
+  { key: 'free_trial', label: '1 day free trial', description: 'Free trial' },
+  { key: '7_days', label: '7 days', description: '$10' },
+  { key: '30_days', label: '30 days', description: '$50' },
+  { key: '95_days', label: '95 days', description: '$150' },
+  { key: '355_days', label: '355 days', description: '$500' }
+]; %>
+<% const hourNow = new Date().getHours();
+   const timeGreeting = hourNow < 12 ? 'Good morning' : hourNow < 18 ? 'Good afternoon' : 'Good evening'; %>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BsmartQ | Operations</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="portal-<%= portal.key %>">
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <img class="brand-logo" src="/images/file_00000000c0ec81f48652b42d6ca52a4d.png" alt="BsmartQ">
+        </div>
+        <div class="workspace">
+          <span class="avatar emerald"
+            ><%= demo.organization.name.slice(0, 1).toUpperCase() %></span
+          >
+          <div>
+            <b><%= demo.organization.name %></b
+            ><small><%= portal.label %></small>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <nav>
+          <p class="nav-label">Workspace</p>
+          <a class="active" href="/"><span>⌂</span> Overview</a
+          ><a href="#queues"><span>≋</span> Live queues <i>4</i></a
+          ><a href="#appointments"><span>◷</span> Appointments</a
+          ><a href="#appointments"><span>♙</span> Customers</a>
+          <p class="nav-label">Manage</p>
+          <a href="#queues"><span>▦</span> Services & activities</a
+          ><a href="/staff"><span>♧</span> Staff & counters</a
+          ><a href="/display?organizationId=<%= demo.organization.id %>" target="_blank"><span>⌁</span> QR codes</a
+          ><a href="#ai"><span>▥</span> Reports</a
+          ><a href="#ai"><span>✦</span> BsmartQ AI <em>NEW</em></a>
+        </nav>
+        <div class="sidebar-bottom">
+          <a href="/settings"><span>⚙</span> Settings</a>
+          <div class="help">
+            <span class="help-icon">?</span>
+            <div><b>Need a hand?</b><small>Visit our help center</small></div>
+            <span>→</span>
+          </div>
+          <div class="profile">
+            <span class="avatar coral">AN</span>
+            <div>
+              <b><%= user.full_name %></b><small><%= user.role %></small>
+            </div>
+            <span>⋮</span>
+          </div>
+          <form method="post" action="/logout"><button class="sidebar-logout" type="submit">↪ Log out</button></form>
+        </div>
+      </aside>
+      <main class="main-content">
+        <header class="topbar">
+          <button class="icon-btn menu-toggle" id="menuToggle">☰</button>
+          <div class="breadcrumbs">
+            <span>Workspace</span><b>/</b><strong><%= page %></strong>
+          </div>
+          <div class="top-actions">
+            <button class="icon-btn" id="searchToggle" title="Search">⌕</button
+            ><button class="icon-btn notification" id="notificationToggle" title="Notifications">♢<i></i></button
+            ><button class="branch-select" id="branchSelect">
+              ⌖ <span><%= demo.organization.branch %></span>⌄
+            </button>
+          </div>
+        </header>
+        <section class="content">
+          <div class="intro">
+            <div>
+              <p class="eyebrow">
+                <%= portal.focus %> <span class="live-dot"></span> Live
+              </p>
+              <h1>
+                <%= timeGreeting %>, <%= user.full_name.split(' ')[0] %> <span>✦</span>
+              </h1>
+              <p class="subhead">
+                <%= portal.label %> for <%= demo.organization.branch %>.
+              </p>
+            </div>
+            <div class="intro-actions">
+              <a
+                class="button secondary"
+                href="/display?organizationId=<%= demo.organization.id %>"
+                target="_blank"
+                >▣ Public display</a
+              ><a
+                class="button primary"
+                href="/join?organizationId=<%= demo.organization.id %>"
+                >+ Join a queue</a
+              >
+            </div>
+          </div>
+          <div class="stat-grid">
+            <article class="stat-card">
+              <div class="stat-top">
+                <span class="stat-icon mint">≋</span
+                ><span class="trend up">↗ 12.4%</span>
+              </div>
+              <p>Customers waiting</p>
+              <strong id="waitingCount"><%= demo.stats.waiting %></strong
+              ><small>vs. 26 yesterday</small>
+            </article>
+            <article class="stat-card">
+              <div class="stat-top">
+                <span class="stat-icon yellow">◉</span
+                ><span class="trend up">↗ 8.2%</span>
+              </div>
+              <p>Being served</p>
+              <strong><%= demo.stats.serving %></strong
+              ><small>Across 6 active counters</small>
+            </article>
+            <article class="stat-card">
+              <div class="stat-top">
+                <span class="stat-icon blue">✓</span
+                ><span class="trend up">↗ 18.7%</span>
+              </div>
+              <p>Completed today</p>
+              <strong><%= demo.stats.completed %></strong
+              ><small>Goal: 180 customers</small>
+            </article>
+            <article class="stat-card">
+              <div class="stat-top">
+                <span class="stat-icon coral-bg">◷</span
+                ><span class="trend down">↘ 3.1%</span>
+              </div>
+              <p>Average wait time</p>
+              <strong><%= demo.stats.avgWait %></strong
+              ><small>12% faster than last week</small>
+            </article>
+          </div>
+          <div class="section-heading">
+            <div>
+              <h2>Live <%= portal.queueNoun %> queues</h2>
+              <p>Real-time overview of today’s <%= portal.queueNoun %> flow.</p>
+            </div>
+            <a href="#queues" class="text-link">View all queues →</a>
+          </div>
+          <section class="queue-layout" id="queues">
+            <div class="panel queue-panel">
+              <div class="panel-head">
+                <div>
+                  <h3>
+                    Active queues <span class="live-pill"><i></i> Live</span>
+                  </h3>
+                  <p>Updated a few seconds ago</p>
+                </div>
+                <button class="icon-btn">⋮</button>
+              </div>
+              <div class="service-list">
+                <% demo.services.forEach((service) => { %>
+                <div class="service-row">
+                  <span class="service-dot <%= service.color %>"></span>
+                  <div class="service-name">
+                    <b><%= service.name %></b
+                    ><small><%= service.prefix %> series</small>
+                  </div>
+                  <strong><%= service.count %></strong
+                  ><span class="people">waiting</span>
+                  <div class="wait-bar">
+                    <i
+                      data-width="<%= Math.min(service.count * 6, 100) %>"
+                    ></i>
+                  </div>
+                  <span class="wait-time"><%= service.wait %></span
+                  ><button class="more">···</button>
+                </div>
+                <% }) %>
+              </div>
+
+              <form method="post" action="/settings/subscription" class="subscription-box">
+                <div class="subscription-header">
+                  <div>
+                    <h4>Subscription</h4>
+                    <p>Choose your plan</p>
+                  </div>
+                  <span class="subscription-badge"><%= planOptions.find((plan) => plan.key === activeSubscription)?.label || '1 day free trial' %></span>
+                </div>
+                <div class="plan-grid">
+                  <% planOptions.forEach((plan) => { %>
+                    <label class="plan-option <%= plan.key === activeSubscription ? 'selected' : '' %>">
+                      <input type="radio" name="subscription" value="<%= plan.key %>" <%= plan.key === activeSubscription ? 'checked' : '' %> />
+                      <span><strong><%= plan.label %></strong></span>
+                      <small><%= plan.description %></small>
+                    </label>
+                  <% }) %>
+                </div>
+                <button class="button primary full" type="submit">Update plan</button>
+              </form>
+
+              <div class="live-ticket-heading"><b>All active tickets</b><span><%= demo.tickets.length %> tickets</span></div>
+              <div class="live-ticket-list" id="liveTickets">
+                <% demo.tickets.forEach((ticket) => { %>
+                <div class="live-ticket-row">
+                  <strong><%= ticket.number %></strong>
+                  <span><%= ticket.service %></span>
+                  <span><%= ticket.customer %></span>
+                  <span class="ticket-status <%= ticket.status.toLowerCase().replaceAll(' ', '-') %>"><%= ticket.status %></span>
+                  <span><%= ticket.counter %></span>
+                  <small><%= ticket.waited %></small>
+                </div>
+                <% }) %>
+                <% if (!demo.tickets.length) { %><div class="empty-ticket-list">No active tickets</div><% } %>
+              </div>
+              <a class="panel-footer" href="#queues">
+                  Open queue manager <span>→</span>
+                </a>
+            </div>
+            <div class="panel serving-panel" id="staff">
+              <div class="panel-head">
+                <div>
+                  <h3>Now serving</h3>
+                  <p>Active counters right now</p>
+                </div>
+                  <a class="text-link" href="/display?organizationId=<%= demo.organization.id %>" target="_blank"
+                  >Display ↗</a
+                >
+              </div>
+              <div class="serving-ticket">
+                <div class="ticket-label">
+                  CURRENT TICKET <span class="pulse"></span>
+                </div>
+                <strong id="currentTicket"><%= demo.tickets[0] ? demo.tickets[0].number : '—' %></strong>
+                <div class="ticket-service"><%= demo.tickets[0] ? demo.tickets[0].service : 'No active queue' %></div>
+                <div class="ticket-counter">
+                  <span>Serving at</span><b><%= demo.tickets[0] ? demo.tickets[0].counter : 'No active counter' %></b>
+                </div>
+                <button class="button call-next" id="callNext" data-counter="<%= user.counter_name || 'Counter 04' %>">
+                  ⌁ &nbsp; Call next customer
+                </button>
+              </div>
+              <div class="counter-strip">
+                <span><i class="counter-live"></i> 6 counters active</span
+                ><a href="#staff">Manage counters →</a>
+              </div>
+            </div>
+          </section>
+          <section class="bottom-grid">
+            <div class="panel appointments" id="appointments">
+              <div class="panel-head">
+                <div>
+                  <h3>Upcoming appointments</h3>
+                  <p>Thursday, 27 August</p>
+                </div>
+                <a class="button small secondary" href="#appointments">View calendar</a>
+              </div>
+              <div class="appointment-row">
+                <span class="time">10:30 <small>AM</small></span
+                ><span class="avatar mini blue-bg">MN</span>
+                <div>
+                  <b>Mark Nsubuga</b><small>Loan consultation · LOA</small>
+                </div>
+                <span class="appointment-status confirmed">Confirmed</span>
+              </div>
+              <div class="appointment-row">
+                <span class="time">11:00 <small>AM</small></span
+                ><span class="avatar mini purple-bg">JK</span>
+                <div>
+                  <b>Josephine K.</b><small>Account opening · ACC</small>
+                </div>
+                <span class="appointment-status confirmed">Confirmed</span>
+              </div>
+              <div class="appointment-row">
+                <span class="time">11:30 <small>AM</small></span
+                ><span class="avatar mini yellow-bg">TM</span>
+                <div><b>Tom Mugisha</b><small>Card services · CRD</small></div>
+                <span class="appointment-status pending">Pending</span>
+              </div>
+            </div>
+            <div class="panel ai-panel" id="ai">
+              <div class="ai-heading">
+                <span class="ai-spark">✦</span>
+                <div>
+                  <h3>BsmartQ AI insights</h3>
+                  <p>Intelligence for your operation</p>
+                </div>
+                <span class="ai-badge">AI</span>
+              </div>
+              <div class="ai-chat" id="aiChatMessages"><div class="ai-message assistant">Ask me about queues, customers, staff, counters, appointments, or today’s operations.</div></div>
+              <form class="ai-chat-form" id="aiChatForm">
+                <input id="aiMessage" name="message" maxlength="2000" placeholder="Ask BsmartQ AI..." autocomplete="off" required>
+                <button class="button primary" type="submit">Send</button>
+              </form>
+              <div class="insight">
+                <span class="insight-icon">↗</span>
+                <div>
+                  <b>Peak hour approaching</b>
+                  <p>
+                    Cash Deposit is expected to rise by
+                    <strong>35%</strong> between 12:00 PM and 2:00 PM.
+                  </p>
+                </div>
+              </div>
+              <div class="recommend">
+                <span>✦</span>
+                <div>
+                  <b>Recommendation</b>
+                  <p>
+                    Open <strong>2 additional counters</strong> around noon to
+                    keep wait times under 20 minutes.
+                  </p>
+                </div>
+              </div>
+              <a class="panel-footer" href="#ai">View all insights <span>→</span></a>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
