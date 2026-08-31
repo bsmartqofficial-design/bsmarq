@@ -189,13 +189,21 @@ app.get('/booking', requireStaff, async (req, res, next) => {
 app.get('/updates', requireStaff, async (req, res, next) => {
   try {
     const demo = await queries.loadDashboard(req.session.user.organization_id);
+    const notifications = await queries.listUserNotifications(req.session.user.id, req.session.user.organization_id);
+    const latestUpdate = notifications.find((note) => note.is_global || note.organization_id === req.session.user.organization_id)
+      || notifications[0]
+      || {
+        title: 'System update',
+        message: 'System maintenance is scheduled. Please continue with normal queue operations.'
+      };
     res.render('updates', {
       user: req.session.user,
       demo,
       portal: getPortalProfile(demo.organization.type),
       title: 'System update',
       page: 'System update',
-      updateMessage: 'System maintenance is scheduled. Please continue with normal queue operations.'
+      updateMessage: latestUpdate.message || latestUpdate.title || 'System maintenance is scheduled. Please continue with normal queue operations.',
+      updateTitle: latestUpdate.title || 'System update'
     });
   } catch (error) { next(error); }
 });

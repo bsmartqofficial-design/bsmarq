@@ -131,18 +131,15 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   if (bookingLinkForm) {
     bookingLinkForm.addEventListener('submit', (event) => {
       event.preventDefault();
-      const formData = new FormData(bookingLinkForm);
-      const purpose = String(formData.get('purpose') || '').trim() || 'Service support';
       const baseUrl = `${window.location.origin}/join?organizationId=${encodeURIComponent(window.organizationId || '')}`;
-      const generatedUrl = `${baseUrl}&purpose=${encodeURIComponent(purpose)}`;
       const output = document.getElementById('bookingLinkOutput');
       if (output) {
         output.innerHTML = `
           <label>
             <span>Client booking link</span>
-            <input type="text" value="${generatedUrl}" readonly />
+            <input type="text" value="${baseUrl}" readonly />
           </label>
-          <button type="button" class="button secondary" data-copy-link="${generatedUrl}">Copy link</button>
+          <button type="button" class="button secondary" data-copy-link="${baseUrl}">Copy link</button>
         `;
         const copyButton = output.querySelector('[data-copy-link]');
         if (copyButton) {

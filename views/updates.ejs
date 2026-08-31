@@ -51,12 +51,12 @@
           <div class="panel update-panel">
             <div class="panel-head">
               <div>
-                <h3>System update</h3>
+                <h3><%= updateTitle || 'System update' %></h3>
                 <p>Queue service information for staff and customers.</p>
               </div>
             </div>
             <div class="update-message-box">
-              <p>System maintenance is scheduled. Please continue with normal queue operations.</p>
+              <p><%= updateMessage || 'System maintenance is scheduled. Please continue with normal queue operations.' %></p>
             </div>
           </div>
         </section>
