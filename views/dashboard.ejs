@@ -7,7 +7,44 @@
 ]; %>
 <% const hourNow = new Date().getHours();
    const timeGreeting = hourNow < 12 ? 'Good morning' : hourNow < 18 ? 'Good afternoon' : 'Good evening';
-   const displayName = (user && user.full_name && user.full_name.trim()) ? user.full_name : 'Kang Chuol'; %>
+   const displayName = (user && user.full_name && user.full_name.trim()) ? user.full_name : 'Kang Chuol';
+   const orgType = String(demo && demo.organization && demo.organization.type ? demo.organization.type : '').toLowerCase();
+   const insightConfig = (() => {
+     if (orgType.includes('bank') || orgType.includes('finance') || orgType.includes('insurance')) {
+       return {
+         title: 'Peak hour approaching',
+         text: 'Cash Deposit is expected to rise by <strong>35%</strong> between 12:00 PM and 2:00 PM.'
+       };
+     }
+     if (orgType.includes('health') || orgType.includes('hospital') || orgType.includes('clinic')) {
+       return {
+         title: 'Clinic demand rising',
+         text: 'Appointments and registration demand is expected to rise by <strong>28%</strong> during the midday surge.'
+       };
+     }
+     if (orgType.includes('school') || orgType.includes('university')) {
+       return {
+         title: 'Student flow rising',
+         text: 'Admissions and registration activity is expected to rise by <strong>24%</strong> during the next peak period.'
+       };
+     }
+     if (orgType.includes('ngo') || orgType.includes('community') || orgType.includes('refugee') || orgType.includes('charit') || orgType.includes('humanitarian') || orgType.includes('settlement')) {
+       return {
+         title: 'Community demand rising',
+         text: 'Community support and outreach demand is expected to rise by <strong>31%</strong> during the afternoon period.'
+       };
+     }
+     if (orgType.includes('government') || orgType.includes('public')) {
+       return {
+         title: 'Public service demand rising',
+         text: 'Document and service desk demand is expected to rise by <strong>26%</strong> during the next busy window.'
+       };
+     }
+     return {
+       title: 'Peak hour approaching',
+       text: 'Queue demand is expected to rise by <strong>22%</strong> during the next busy period.'
+     };
+   })(); %>
 <!doctype html>
 <html lang="en">
   <head>
@@ -120,6 +157,8 @@
               </p>
             </div>
             <div class="intro-actions">
+              <button class="button secondary" type="button" id="systemUpdateButton">✦ System update</button>
+              <button class="button primary" type="button" id="homeInviteButton">🏠 Invite home booking</button>
               <a
                 class="button secondary"
                 href="/display?organizationId=<%= demo.organization.id %>"
@@ -131,6 +170,30 @@
                 >+ Join a queue</a
               >
             </div>
+          </div>
+          <div class="admin-quick-panel hidden" id="adminQuickPanel">
+            <form id="systemUpdateForm" class="admin-action-form">
+              <label>
+                <span>Update title</span>
+                <input type="text" name="title" value="Service update" />
+              </label>
+              <label>
+                <span>Message</span>
+                <textarea name="message" rows="3" placeholder="Share a customer service update..."></textarea>
+              </label>
+              <button type="submit" class="button primary">Save update</button>
+            </form>
+            <form id="homeInviteForm" class="admin-action-form alternate">
+              <label>
+                <span>Home booking message</span>
+                <input type="text" name="title" value="Home booking available" />
+              </label>
+              <label>
+                <span>Invite details</span>
+                <textarea name="message" rows="3">Customers can now book their appointment from home. Visit the booking link or contact the desk for details.</textarea>
+              </label>
+              <button type="submit" class="button secondary">Send home booking invite</button>
+            </form>
           </div>
           <div class="stat-grid">
             <article class="stat-card">
@@ -325,10 +388,9 @@
               <div class="insight">
                 <span class="insight-icon">↗</span>
                 <div>
-                  <b>Peak hour approaching</b>
+                  <b><%= insightConfig.title %></b>
                   <p>
-                    Cash Deposit is expected to rise by
-                    <strong>35%</strong> between 12:00 PM and 2:00 PM.
+                    <%- insightConfig.text %>
                   </p>
                 </div>
               </div>

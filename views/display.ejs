@@ -21,7 +21,7 @@
 		</section>
 		<aside class="waiting-board">
 			<p class="display-label">UP NEXT</p>
-			<% tickets.slice(1, 4).forEach((ticket) => { %>
+			<% tickets.slice(1).forEach((ticket) => { %>
 				<div class="next-ticket"><b><%= ticket.number %></b><span><%= ticket.service %></span></div>
 			<% }) %>
 			<% if (tickets.length < 2) { %>

@@ -1295,6 +1295,41 @@ select {
   color: var(--green) !important;
   font-size: 12px !important;
 }
+.admin-quick-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 18px;
+  margin: 8px 0 28px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+.admin-action-form {
+  display: grid;
+  gap: 12px;
+}
+.admin-action-form label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--deep);
+}
+.admin-action-form input,
+.admin-action-form textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  resize: vertical;
+}
+.admin-action-form.alternate {
+  border-left: 1px solid var(--line);
+  padding-left: 18px;
+}
 .display-page {
   background: #0b2419;
   color: white;
@@ -1351,7 +1386,7 @@ select {
   margin: 0;
 }
 .display-number {
-  font: 800 110px Manrope;
+  font: 800 130px Manrope;
   letter-spacing: 5px;
   color: #a4e7b9;
   margin: 35px 0 4px;

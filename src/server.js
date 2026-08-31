@@ -324,6 +324,43 @@ app.get('/api/notifications', requireStaff, async (req, res) => {
   }
 });
 
+app.post('/api/system-update', requireStaff, async (req, res) => {
+  try {
+    const title = String(req.body.title || '').trim() || 'System update';
+    const message = String(req.body.message || '').trim();
+    if (!message) return res.status(400).json({ success: false, error: 'Message is required.' });
+    const note = await queries.createSystemNotification({
+      title,
+      message,
+      userId: req.session.user.id,
+      organizationId: req.session.user.organization_id,
+      isGlobal: false
+    });
+    io.to(`org:${req.session.user.organization_id}`).emit('system:update', note);
+    res.json({ success: true, notification: note });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Unable to save the update.' });
+  }
+});
+
+app.post('/api/home-booking-invite', requireStaff, async (req, res) => {
+  try {
+    const title = String(req.body.title || '').trim() || 'Home booking available';
+    const message = String(req.body.message || '').trim() || 'Customers can book from home. Please contact the service desk for more details.';
+    const note = await queries.createSystemNotification({
+      title,
+      message,
+      userId: req.session.user.id,
+      organizationId: req.session.user.organization_id,
+      isGlobal: false
+    });
+    io.to(`org:${req.session.user.organization_id}`).emit('system:update', note);
+    res.json({ success: true, notification: note });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Unable to save the home booking invite.' });
+  }
+});
+
 app.post('/api/notifications/read', requireStaff, async (req, res) => {
   try {
     await queries.markNotificationsRead(req.session.user.id, req.session.user.organization_id);

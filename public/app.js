@@ -14,6 +14,35 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   const dashboardSearch = document.getElementById('dashboardSearch');
   const searchWrap = document.getElementById('searchWrap');
   const notificationPanel = document.getElementById('notificationPanel');
+  const systemUpdateButton = document.getElementById('systemUpdateButton');
+  const homeInviteButton = document.getElementById('homeInviteButton');
+  const adminQuickPanel = document.getElementById('adminQuickPanel');
+  const systemUpdateForm = document.getElementById('systemUpdateForm');
+  const homeInviteForm = document.getElementById('homeInviteForm');
+
+  function updateGreeting() {
+    const greetingTarget = document.querySelector('.intro h1');
+    if (!greetingTarget) return;
+    const hour = new Date().getHours();
+    const label = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    const name = greetingTarget.dataset.userName || 'Team';
+    greetingTarget.innerHTML = `${label}, ${name} <span>✦</span>`;
+  }
+
+  function announceTicket(ticketNumber, label = 'Now serving') {
+    if (!ticketNumber || !('speechSynthesis' in window)) return;
+    const text = `${label} ${ticketNumber}`;
+    const speak = (value) => {
+      const utterance = new SpeechSynthesisUtterance(value);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    };
+    speak(text);
+    setTimeout(() => speak(text), 400);
+  }
 
   function filterDashboardSearch() {
     if (!dashboardSearch) return;
@@ -41,9 +70,13 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 
   function updateQueue(queue) {
     const waiting = queue.filter((ticket) => ticket.status === 'Waiting').length;
-    const serving = queue.find((ticket) => ticket.status === 'Now serving');
+    const serving = queue.find((ticket) => ticket.status.includes('Serving') || ticket.status.includes('serving'));
     if (waitingCount) waitingCount.textContent = waiting;
     if (serving && currentTicket) currentTicket.textContent = serving.number;
+    if (serving && window.lastServingTicket !== serving.number) {
+      announceTicket(serving.number, 'Now serving');
+      window.lastServingTicket = serving.number;
+    }
     if (window.trackedTicket) {
       const tracked = queue.find((ticket) => ticket.number === window.trackedTicket);
       const status = document.getElementById('ticketStatus');
@@ -78,15 +111,67 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     const response = await fetch('/api/tickets/next', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ counter: callNext.dataset.counter || 'Counter 04' }) });
     const ticket = await response.json();
     if (ticket.number && currentTicket) currentTicket.textContent = ticket.number;
+    if (ticket.number) announceTicket(ticket.number, 'Now serving');
     callNext.disabled = false;
     callNext.innerHTML = '⌁ &nbsp; Call next customer';
   });
+  updateGreeting();
   if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
   if (searchToggle) searchToggle.addEventListener('click', () => {
     searchToggle.classList.toggle('active');
     if (searchWrap) searchWrap.classList.toggle('hidden');
     if (!searchWrap.classList.contains('hidden') && dashboardSearch) dashboardSearch.focus();
   });
+  if (systemUpdateButton && adminQuickPanel) {
+    systemUpdateButton.addEventListener('click', () => {
+      adminQuickPanel.classList.toggle('hidden');
+      systemUpdateForm?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+  if (homeInviteButton && adminQuickPanel) {
+    homeInviteButton.addEventListener('click', () => {
+      adminQuickPanel.classList.toggle('hidden');
+      homeInviteForm?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+  if (systemUpdateForm) {
+    systemUpdateForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(systemUpdateForm);
+      const title = String(formData.get('title') || '').trim();
+      const message = String(formData.get('message') || '').trim();
+      if (!message) return;
+      const response = await fetch('/api/system-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, message })
+      });
+      const data = await response.json();
+      if (data.success) {
+        systemUpdateForm.reset();
+        adminQuickPanel.classList.add('hidden');
+      }
+    });
+  }
+  if (homeInviteForm) {
+    homeInviteForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(homeInviteForm);
+      const title = String(formData.get('title') || '').trim();
+      const message = String(formData.get('message') || '').trim();
+      if (!message) return;
+      const response = await fetch('/api/home-booking-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, message })
+      });
+      const data = await response.json();
+      if (data.success) {
+        homeInviteForm.reset();
+        adminQuickPanel.classList.add('hidden');
+      }
+    });
+  }
   if (dashboardSearch) dashboardSearch.addEventListener('input', filterDashboardSearch);
   if (branchSelect) branchSelect.addEventListener('click', () => branchSelect.classList.toggle('active'));
   if (notificationToggle) notificationToggle.addEventListener('click', () => {
