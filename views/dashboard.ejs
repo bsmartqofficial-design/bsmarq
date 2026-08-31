@@ -117,29 +117,9 @@
               <input id="dashboardSearch" type="search" placeholder="Search queue or staff..." aria-label="Search" />
             </div>
             <button class="icon-btn" id="searchToggle" title="Search">⌕</button>
-            <a class="button secondary topbar-update-button" href="/updates" id="systemUpdateButton">✦ Update</a>
-            <div class="notification-wrapper">
-              <button class="icon-btn notification updates-button" id="notificationToggle" title="System updates">
-                Updates
-                <% if (Array.isArray(notifications) && notifications.length) { %><span class="notification-dot" aria-label="Unread updates"></span><% } %>
-              </button>
-              <div class="notification-panel hidden" id="notificationPanel">
-                <% if (Array.isArray(notifications) && notifications.length) { %>
-                  <% notifications.forEach((note) => { %>
-                    <div class="notification-item">
-                      <strong><%= note.title %></strong>
-                      <p><%= note.message %></p>
-                      <small><%= new Date(note.created_at).toLocaleString() %></small>
-                    </div>
-                  <% }) %>
-                <% } else { %>
-                  <div class="notification-item empty">
-                    <strong>No updates</strong>
-                    <p>System notices will appear here.</p>
-                  </div>
-                <% } %>
-              </div>
-            </div>
+            <% if (Array.isArray(notifications) && notifications.length) { %>
+              <a class="button secondary topbar-update-button" href="/updates" id="systemUpdateButton">✦ Update</a>
+            <% } %>
             <button class="branch-select" id="branchSelect">
               ⌖ <span><%= demo.organization.branch %></span>⌄
             </button>
