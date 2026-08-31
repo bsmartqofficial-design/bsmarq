@@ -40,8 +40,8 @@
         <nav>
           <p class="nav-label">Workspace</p>
           <a class="active" href="/"><span>⌂</span> Overview</a
-          ><a href="/community"><span>◌</span> Community module</a
-          ><a href="#queues"><span>≋</span> Live queues <i>4</i></a
+          <% if (enableCommunityModule) { %><a href="/community"><span>◌</span> Community module</a><% } %>
+          <a href="#queues"><span>≋</span> Live queues <i>4</i></a
           ><a href="#appointments"><span>◷</span> Appointments</a
           ><a href="#appointments"><span>♙</span> Customers</a>
           <p class="nav-label">Manage</p>
@@ -80,9 +80,9 @@
             </div>
             <button class="icon-btn" id="searchToggle" title="Search">⌕</button
             ><div class="notification-wrapper">
-              <button class="icon-btn notification" id="notificationToggle" title="Notifications">
-                ♢
-                <% if (Array.isArray(notifications) && notifications.length) { %><i class="notification-badge"><%= notifications.length %></i><% } %>
+              <button class="icon-btn notification updates-button" id="notificationToggle" title="System updates">
+                Updates
+                <% if (Array.isArray(notifications) && notifications.length) { %><span class="notification-dot" aria-label="Unread updates"></span><% } %>
               </button>
               <div class="notification-panel hidden" id="notificationPanel">
                 <% if (Array.isArray(notifications) && notifications.length) { %>

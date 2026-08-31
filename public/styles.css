@@ -598,6 +598,27 @@ a {
   top: 2px;
   right: 1px;
 }
+.updates-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--deep);
+  background: #effaf2;
+  border: 1px solid #cfead9;
+}
+.notification-dot {
+  width: 9px;
+  height: 9px;
+  min-width: 9px;
+  border-radius: 50%;
+  background: #2ebd59;
+  box-shadow: 0 0 0 3px rgba(46, 189, 89, 0.2);
+  display: inline-block;
+}
 .branch-select {
   border: 1px solid var(--line);
   background: #fff;

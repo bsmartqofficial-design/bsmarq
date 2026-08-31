@@ -21,6 +21,11 @@ async function ensureSuperAdmin() {
   `, [email, passwordHash]);
 }
 
+function isCommunityPortalType(type = '') {
+  const value = String(type || '').toLowerCase();
+  return ['ngo', 'non-government', 'charit', 'community', 'refugee', 'humanitarian', 'settlement'].some((term) => value.includes(term));
+}
+
 function servicesForType(type = '') {
   const value = type.toLowerCase();
   if (value.includes('bank') || value.includes('finance') || value.includes('insurance')) return [['Deposits', 'DEP'], ['Withdrawals', 'WTH'], ['Account opening', 'ACC'], ['Loan enquiries', 'LOA']];
@@ -317,18 +322,42 @@ async function createTicket({ customerName, prefix, organizationId, phone = '' }
 }
 
 async function getTicket(ticketNumber, organizationId) {
-  const context = await getContext(organizationId);
-  const result = await pool.query(`
-    SELECT t.ticket_number, t.customer_name, t.status, t.joined_at, c.name AS counter_name,
-           s.name AS service_name,
-           (SELECT COUNT(*)::int FROM queue_tickets ahead
-            WHERE ahead.organization_id = t.organization_id AND ahead.branch_id = t.branch_id
-              AND ahead.service_id = t.service_id AND ahead.status = 'waiting'
-              AND ahead.joined_at < t.joined_at) AS people_ahead
-    FROM queue_tickets t JOIN services s ON s.id = t.service_id
-    LEFT JOIN counters c ON c.id = t.counter_id
-    WHERE t.ticket_number = $1 AND t.organization_id = $2 AND t.branch_id = $3
-    LIMIT 1`, [ticketNumber, context.organization_id, context.branch_id]);
+  let context = null;
+  try {
+    context = await getContext(organizationId);
+  } catch (error) {
+    context = null;
+  }
+
+  let result;
+  if (context) {
+    result = await pool.query(`
+      SELECT t.ticket_number, t.customer_name, t.status, t.joined_at, c.name AS counter_name,
+             s.name AS service_name,
+             (SELECT COUNT(*)::int FROM queue_tickets ahead
+              WHERE ahead.organization_id = t.organization_id AND ahead.branch_id = t.branch_id
+                AND ahead.service_id = t.service_id AND ahead.status = 'waiting'
+                AND ahead.joined_at < t.joined_at) AS people_ahead
+      FROM queue_tickets t JOIN services s ON s.id = t.service_id
+      LEFT JOIN counters c ON c.id = t.counter_id
+      WHERE t.ticket_number = $1 AND t.organization_id = $2 AND t.branch_id = $3
+      LIMIT 1`, [ticketNumber, context.organization_id, context.branch_id]);
+  }
+
+  if (!result || !result.rows[0]) {
+    result = await pool.query(`
+      SELECT t.ticket_number, t.customer_name, t.status, t.joined_at, c.name AS counter_name,
+             s.name AS service_name,
+             (SELECT COUNT(*)::int FROM queue_tickets ahead
+              WHERE ahead.organization_id = t.organization_id AND ahead.branch_id = t.branch_id
+                AND ahead.service_id = t.service_id AND ahead.status = 'waiting'
+                AND ahead.joined_at < t.joined_at) AS people_ahead
+      FROM queue_tickets t JOIN services s ON s.id = t.service_id
+      LEFT JOIN counters c ON c.id = t.counter_id
+      WHERE t.ticket_number = $1
+      LIMIT 1`, [ticketNumber]);
+  }
+
   return result.rows[0] ? { ...formatTicket(result.rows[0]), peopleAhead: result.rows[0].people_ahead } : null;
 }
 
@@ -714,5 +743,6 @@ module.exports = {
   createCommunityBeneficiary,
   createCommunityEvent,
   listCommunityEvents,
-  normalizePhoneNumber
+  normalizePhoneNumber,
+  isCommunityPortalType
 };

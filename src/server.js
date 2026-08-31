@@ -110,7 +110,8 @@ function getPortalProfile(type = '') {
 }
 
 function getRequestedOrganizationId(req) {
-  return req.session.user?.organization_id || req.query.organizationId || null;
+  const organizationId = req.session.user?.organization_id || req.query?.organizationId || req.body?.organizationId || req.params?.organizationId || null;
+  return organizationId || null;
 }
 
 app.get('/login', (req, res) => res.render('login', {
@@ -158,23 +159,28 @@ app.get('/', requireStaff, async (req, res, next) => {
   try {
     const demo = await queries.loadDashboard(req.session.user.organization_id);
     const notifications = await queries.listUserNotifications(req.session.user.id, req.session.user.organization_id);
+    const portal = getPortalProfile(demo.organization.type);
     res.render('dashboard', {
       page: 'Overview',
       demo,
       tickets: demo.tickets,
-      portal: getPortalProfile(demo.organization.type),
+      portal,
       user: req.session.user,
       plans: subscriptionPlanList,
       activeSubscription: demo.organization.subscription || 'free_trial',
-      notifications
+      notifications,
+      enableCommunityModule: queries.isCommunityPortalType(demo.organization.type)
     });
   } catch (error) { next(error); }
 });
 app.get('/dashboard', requireStaff, (req, res) => res.redirect('/'));
 app.get('/community', requireStaff, async (req, res, next) => {
   try {
-    const community = await queries.getCommunityModuleOverview(req.session.user.organization_id);
     const demo = await queries.loadDashboard(req.session.user.organization_id);
+    if (!queries.isCommunityPortalType(demo.organization.type)) {
+      return res.redirect('/');
+    }
+    const community = await queries.getCommunityModuleOverview(req.session.user.organization_id);
     res.render('community', {
       user: req.session.user,
       demo,
