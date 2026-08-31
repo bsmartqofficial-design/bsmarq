@@ -22,7 +22,7 @@
           <label>Organization type
             <select name="organizationType" required>
               <option value="">Select a type</option>
-              <% ['Banking & Finance','Healthcare','Government Office','School & University','Telecom','Restaurant & Food Service','Service & Repair Center','Embassy & Consulate','Insurance','Supermarket & Retail','NGO','Legal & Law Firm','Post Office & Courier','Other'].forEach((type) => { %>
+              <% ['Banking & Finance','Healthcare','Government Office','School & University','Telecom','Restaurant & Food Service','Service & Repair Center','Embassy & Consulate','Insurance','Supermarket & Retail','NGO','Refugee & Community Services','Legal & Law Firm','Post Office & Courier','Other'].forEach((type) => { %>
                 <option value="<%= type %>" <%= values.organizationType === type ? 'selected' : '' %>><%= type %></option>
               <% }) %>
             </select>

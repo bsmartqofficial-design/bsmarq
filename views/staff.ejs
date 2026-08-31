@@ -62,10 +62,11 @@
         <div class="form-divider">Current team</div>
         <% staff.forEach((person) => { %>
         <p>
-          <b><%= person.full_name %></b><br /><small
-            ><%= person.email %> · <%= person.counter_name || 'No counter
-            assigned' %></small
-          ><form method="post" action="/staff/<%= person.id %>/delete" style="display:inline"><button class="button small secondary" type="submit">Delete staff</button></form>
+          <b><%= person.full_name %></b><br />
+          <small><%= person.email %> · <%= person.counter_name || 'No counter assigned' %></small>
+          <form method="post" action="/staff/<%= person.id %>/delete" style="display:inline">
+            <button class="button small secondary" type="submit">Delete staff</button>
+          </form>
         </p>
         <% }) %>
         <div class="form-divider">Counters</div>

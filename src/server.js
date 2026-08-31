@@ -48,16 +48,23 @@ const io = new Server(server, {
   }
 });
 const port = Number(process.env.PORT) || 3000;
+const appUrlHost = (process.env.APP_URL || process.env.PUBLIC_BASE_URL || process.env.HOST || 'http://localhost:3000')
+  .replace(/^https?:\/\//i, '')
+  .split(':')[0]
+  .toLowerCase();
+const isLocalhostDevelopment = ['localhost', '127.0.0.1', '0.0.0.0'].includes(appUrlHost);
+const useSecureCookies = process.env.NODE_ENV === 'production' && !isLocalhostDevelopment && process.env.SESSION_COOKIE_SECURE !== 'false';
 let databaseStatus = { connected: false, initialized: false, message: null };
 const sessionMiddleware = session({
   store: new pgSession({ pool, createTableIfMissing: true }),
   secret: process.env.SESSION_SECRET || 'bsmarq-development-secret',
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true,
   cookie: {
     maxAge: 86400000,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    secure: useSecureCookies,
+    sameSite: useSecureCookies ? 'none' : 'lax',
+    httpOnly: true
   }
 });
 app.set('view engine', 'ejs');
@@ -93,7 +100,7 @@ function getPortalProfile(type = '') {
     { match: ['telecom'], key: 'telecom', label: 'Telecom services portal', queueNoun: 'customer', focus: 'Service centre operations' },
     { match: ['restaurant', 'food'], key: 'hospitality', label: 'Hospitality services portal', queueNoun: 'guest', focus: 'Guest service operations' },
     { match: ['retail', 'supermarket'], key: 'retail', label: 'Retail services portal', queueNoun: 'customer', focus: 'Store operations' },
-    { match: ['ngo', 'non-government', 'charit'], key: 'ngo', label: 'NGO services portal', queueNoun: 'beneficiary', focus: 'Community programmes' },
+    { match: ['ngo', 'non-government', 'charit', 'community', 'refugee', 'humanitarian', 'settlement'], key: 'ngo', label: 'NGO services portal', queueNoun: 'beneficiary', focus: 'Community programmes' },
     { match: ['legal', 'law firm', 'lawfirm'], key: 'legal', label: 'Legal services portal', queueNoun: 'client', focus: 'Legal client services' },
     { match: ['post office', 'courier', 'postal', 'delivery'], key: 'logistics', label: 'Postal and courier portal', queueNoun: 'customer', focus: 'Delivery operations' }
   ];
@@ -120,8 +127,13 @@ app.post('/login', async (req, res) => {
       next: req.body.next || '/dashboard'
     });
     req.session.user = user;
-    if (user.role === 'super_admin') return res.redirect('/super-admin');
-    res.redirect(req.body.next || '/dashboard');
+    req.session.save((error) => {
+      if (error) {
+        return res.status(500).render('login', { error: 'Unable to sign in right now.', message: null, next: req.body.next || '/dashboard' });
+      }
+      if (user.role === 'super_admin') return res.redirect('/super-admin');
+      return res.redirect(req.body.next || '/dashboard');
+    });
   } catch (error) { res.status(500).render('login', { error: 'Unable to sign in right now.', message: null, next: req.body.next || '/dashboard' }); }
 });
 function logout(req, res) { req.session.destroy(() => res.redirect('/login')); }
@@ -159,6 +171,79 @@ app.get('/', requireStaff, async (req, res, next) => {
   } catch (error) { next(error); }
 });
 app.get('/dashboard', requireStaff, (req, res) => res.redirect('/'));
+app.get('/community', requireStaff, async (req, res, next) => {
+  try {
+    const community = await queries.getCommunityModuleOverview(req.session.user.organization_id);
+    const demo = await queries.loadDashboard(req.session.user.organization_id);
+    res.render('community', {
+      user: req.session.user,
+      demo,
+      portal: getPortalProfile(demo.organization.type),
+      community,
+      error: null,
+      success: null
+    });
+  } catch (error) { next(error); }
+});
+app.post('/community/register', requireStaff, async (req, res, next) => {
+  try {
+    const payload = {
+      name: req.body.name || req.body.customerName || 'Beneficiary',
+      caseId: req.body.caseId || req.body.beneficiaryId || null,
+      service: req.body.service || 'Registration',
+      priority: req.body.priority || 'standard',
+      mode: req.body.mode || 'ticket'
+    };
+    const result = await queries.createCommunityBeneficiary(req.session.user.organization_id, payload);
+    const demo = await queries.loadDashboard(req.session.user.organization_id);
+    const community = await queries.getCommunityModuleOverview(req.session.user.organization_id);
+    res.render('community', {
+      user: req.session.user,
+      demo,
+      portal: getPortalProfile(demo.organization.type),
+      community,
+      error: null,
+      success: `Beneficiary registered and queued as ${result.queueNumber || 'N/A'} for ${result.service}.`
+    });
+  } catch (error) { next(error); }
+});
+app.post('/community/event', requireStaff, async (req, res, next) => {
+  try {
+    const services = String(req.body.services || '').split(',').map((item) => item.trim()).filter(Boolean);
+    const event = await queries.createCommunityEvent(req.session.user.organization_id, {
+      eventName: req.body.eventName || 'Community Medical Outreach',
+      location: req.body.location || 'Settlement / Community',
+      date: req.body.date || new Date().toISOString().slice(0, 10),
+      services
+    });
+    const demo = await queries.loadDashboard(req.session.user.organization_id);
+    const community = await queries.getCommunityModuleOverview(req.session.user.organization_id);
+    res.render('community', {
+      user: req.session.user,
+      demo,
+      portal: getPortalProfile(demo.organization.type),
+      community: { ...community, eventName: event.name, location: event.location, date: event.date, services: event.services },
+      error: null,
+      success: `Outreach event saved: ${event.name}.`
+    });
+  } catch (error) { next(error); }
+});
+app.get('/api/community/overview', requireStaff, async (req, res) => {
+  try {
+    const overview = await queries.getCommunityModuleOverview(req.session.user.organization_id);
+    res.json(overview);
+  } catch (error) {
+    res.status(500).json({ error: 'Unable to load community overview.' });
+  }
+});
+app.post('/api/community/beneficiary', requireStaff, async (req, res) => {
+  try {
+    const beneficiary = await queries.createCommunityBeneficiary(req.session.user.organization_id, req.body);
+    res.json({ success: true, beneficiary });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message || 'Unable to register beneficiary.' });
+  }
+});
 app.post('/api/ai/chat', requireStaff, async (req, res) => {
   const message = String(req.body.message || '').trim();
   if (!message) return res.status(400).json({ error: 'Enter a question for BsmartQ AI.' });
@@ -347,10 +432,14 @@ app.get('/join', async (req, res, next) => {
 app.post('/join', async (req, res, next) => {
   try {
     const organizationId = req.body.organizationId || null;
-    const ticket = await queries.createTicket({ customerName: req.body.customer || 'New customer', prefix: req.body.service, organizationId });
+    const phone = queries.normalizePhoneNumber(req.body.phone || '');
+    const ticket = await queries.createTicket({ customerName: req.body.customer || 'New customer', prefix: req.body.service, organizationId, phone });
     const trackingUrl = `${req.protocol}://${req.get('host')}/ticket/${encodeURIComponent(ticket.number)}?organizationId=${encodeURIComponent(organizationId || '')}`;
     ticket.trackingUrl = trackingUrl;
     ticket.qrCode = await QRCode.toDataURL(trackingUrl, { width: 180, margin: 1 });
+    if (ticket.phone) {
+      ticket.smsLink = `sms:${ticket.phone}?body=${encodeURIComponent(`Hello BsmartQ, please notify me when my ticket ${ticket.number} is my turn.`)}`;
+    }
     io.to(organizationId ? `org:${organizationId}` : 'public').emit('queue:update', (await queries.loadDashboard(organizationId)).tickets);
     const demo = await queries.loadDashboard(organizationId);
     res.render('join', { demo, portal: getPortalProfile(demo.organization.type), ticket });
@@ -364,6 +453,9 @@ app.get('/ticket/:number', async (req, res, next) => {
     const demo = await queries.loadDashboard(organizationId);
     ticket.trackingUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
     ticket.qrCode = await QRCode.toDataURL(ticket.trackingUrl, { width: 180, margin: 1 });
+    if (ticket.phone) {
+      ticket.smsLink = `sms:${ticket.phone}?body=${encodeURIComponent(`Hello BsmartQ, please notify me when my ticket ${ticket.number} is my turn.`)}`;
+    }
     res.render('join', { demo, portal: getPortalProfile(demo.organization.type), ticket });
   } catch (error) { next(error); }
 });

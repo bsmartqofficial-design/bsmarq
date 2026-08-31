@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Community & Refugee Service Module | BsmartQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="portal-ngo">
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <img class="brand-logo" src="/images/file_00000000c0ec81f48652b42d6ca52a4d.png" alt="BsmartQ">
+        </div>
+        <div class="workspace">
+          <span class="avatar emerald"><%= demo.organization.name.slice(0, 1).toUpperCase() %></span>
+          <div>
+            <b><%= demo.organization.name %></b>
+            <small><%= portal.label %></small>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <nav>
+          <p class="nav-label">Workspace</p>
+          <a href="/"><span>⌂</span> Overview</a>
+          <a class="active" href="/community"><span>◌</span> Community module</a>
+          <a href="#queues"><span>≋</span> Live queues</a>
+          <a href="#reports"><span>▥</span> Reports</a>
+          <p class="nav-label">Manage</p>
+          <a href="/staff"><span>♧</span> Staff & counters</a>
+          <a href="/display?organizationId=<%= demo.organization.id %>" target="_blank"><span>⌁</span> Public display</a>
+        </nav>
+        <div class="sidebar-bottom">
+          <a href="/settings"><span>⚙</span> Settings</a>
+          <div class="profile">
+            <span class="avatar coral">U</span>
+            <div>
+              <b><%= user.full_name %></b>
+              <small><%= user.role %></small>
+            </div>
+            <span>⋮</span>
+          </div>
+          <form method="post" action="/logout"><button class="sidebar-logout" type="submit">↪ Log out</button></form>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <button class="icon-btn menu-toggle" id="menuToggle">☰</button>
+          <div class="breadcrumbs">
+            <span>Workspace</span><b>/</b><strong>Community module</strong>
+          </div>
+          <div class="top-actions">
+            <button class="branch-select" id="branchSelect">⌖ <span><%= demo.organization.branch %></span>⌄</button>
+          </div>
+        </header>
+
+        <section class="content community-page">
+          <% if (success) { %><div class="form-success"><%= success %></div><% } %>
+          <% if (error) { %><div class="form-error"><%= error %></div><% } %>
+
+          <div class="intro">
+            <div>
+              <p class="eyebrow">Community outreach <span class="live-dot"></span> Offline ready</p>
+              <h1><%= community.eventName %></h1>
+              <p class="subhead"><%= community.location %> • <%= community.date %></p>
+            </div>
+          </div>
+
+          <div class="stat-grid">
+            <article class="stat-card">
+              <div class="stat-top"><span class="stat-icon mint">◉</span><span class="trend up">↗</span></div>
+              <p>Total registered</p>
+              <strong><%= community.totalRegistered %></strong>
+              <small>Community records</small>
+            </article>
+            <article class="stat-card">
+              <div class="stat-top"><span class="stat-icon yellow">◌</span><span class="trend up">↗</span></div>
+              <p>Waiting</p>
+              <strong><%= community.waiting %></strong>
+              <small>In queue</small>
+            </article>
+            <article class="stat-card">
+              <div class="stat-top"><span class="stat-icon blue">✓</span><span class="trend up">↗</span></div>
+              <p>Currently served</p>
+              <strong><%= community.serving %></strong>
+              <small>Called + in service</small>
+            </article>
+            <article class="stat-card">
+              <div class="stat-top"><span class="stat-icon coral-bg">◷</span><span class="trend down">↘</span></div>
+              <p>Average wait</p>
+              <strong><%= community.averageWaitingMinutes %> min</strong>
+              <small>Across service points</small>
+            </article>
+          </div>
+
+          <div class="community-grid">
+            <section class="panel community-panel">
+              <div class="panel-head">
+                <div>
+                  <h3>Register beneficiary</h3>
+                  <p>Fast intake without requiring a phone or QR scan. Supports paper assistance and human-led, no-ticket service.</p>
+                </div>
+              </div>
+              <form method="post" action="/community/register" class="community-form">
+                <div class="form-grid">
+                  <label>
+                    Beneficiary / case ID
+                    <input type="text" name="caseId" placeholder="BEN-1048" />
+                  </label>
+                  <label>
+                    Name / identifier
+                    <input type="text" name="name" placeholder="Amina K" required />
+                  </label>
+                </div>
+                <div class="form-grid">
+                  <label>
+                    Household / reference
+                    <input type="text" name="householdReference" placeholder="HH-12" />
+                  </label>
+                  <label>
+                    Service requested
+                    <select name="service">
+                      <% community.services.forEach((service) => { %>
+                        <option value="<%= service.name %>"><%= service.name %></option>
+                      <% }) %>
+                    </select>
+                  </label>
+                </div>
+                <div class="form-grid">
+                  <label>
+                    Service mode
+                    <select name="mode">
+                      <option value="ticket">Queue ticket</option>
+                      <option value="paper">Paper assistance</option>
+                      <option value="no-ticket">No ticket / human support</option>
+                    </select>
+                  </label>
+                  <label>
+                    Priority
+                    <select name="priority">
+                      <option value="standard">Standard</option>
+                      <option value="priority">Priority</option>
+                      <option value="emergency">Emergency</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="form-grid">
+                  <label>
+                    Notes
+                    <input type="text" name="notes" placeholder="Optional notes" />
+                  </label>
+                  <div></div>
+                </div>
+                <button class="button primary full" type="submit">Register & queue</button>
+              </form>
+            </section>
+
+            <section class="panel community-panel">
+              <div class="panel-head">
+                <div>
+                  <h3>Outreach event</h3>
+                  <p>Configure services for the event.</p>
+                </div>
+              </div>
+              <form method="post" action="/community/event" class="community-form">
+                <label>
+                  Event name
+                  <input type="text" name="eventName" value="<%= community.eventName %>" />
+                </label>
+                <label>
+                  Location
+                  <input type="text" name="location" value="<%= community.location %>" />
+                </label>
+                <label>
+                  Date
+                  <input type="date" name="date" value="<%= community.date %>" />
+                </label>
+                <label>
+                  Services (comma separated)
+                  <input type="text" name="services" value="<%= community.services.slice(0, 6).map((service) => service.name).join(', ') %>" />
+                </label>
+                <button class="button secondary full" type="submit">Save event</button>
+              </form>
+            </section>
+          </div>
+
+          <div class="community-grid lower-grid">
+            <section class="panel community-panel" id="reports">
+              <div class="panel-head">
+                <div>
+                  <h3>Operational summary</h3>
+                  <p>Supervisor-ready metrics for community service delivery.</p>
+                </div>
+              </div>
+              <div class="summary-stack">
+                <div class="summary-row"><span>Completed</span><strong><%= community.completed %></strong></div>
+                <div class="summary-row"><span>Cancelled</span><strong><%= community.cancelled %></strong></div>
+                <div class="summary-row"><span>No-show</span><strong><%= community.noShow %></strong></div>
+                <div class="summary-row"><span>People remaining</span><strong><%= community.peopleRemaining %></strong></div>
+                <div class="summary-row"><span>Average service</span><strong><%= community.averageServiceMinutes %> min</strong></div>
+              </div>
+            </section>
+
+            <section class="panel community-panel">
+              <div class="panel-head">
+                <div>
+                  <h3>Service overview</h3>
+                  <p>Queue volumes by service point.</p>
+                </div>
+              </div>
+              <div class="service-list compact">
+                <% community.services.forEach((service) => { %>
+                  <div class="service-row compact-row">
+                    <div class="service-name">
+                      <b><%= service.name %></b>
+                      <small><%= service.prefix %></small>
+                    </div>
+                    <strong><%= service.waiting_count %></strong>
+                    <span class="people">waiting</span>
+                  </div>
+                <% }) %>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

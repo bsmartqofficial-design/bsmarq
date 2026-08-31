@@ -1211,6 +1211,14 @@ select {
   width: 100%;
   margin-top: 10px;
 }
+.sms-button {
+  background: #ecf8f0;
+  color: var(--green);
+  border: 1px solid #c7ecd3;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+}
 .form-note {
   text-align: center;
   color: #a1ada6;

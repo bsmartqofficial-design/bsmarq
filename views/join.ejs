@@ -65,6 +65,11 @@
         <a class="button secondary full" href="<%= ticket.trackingUrl %>"
           >Open live tracker</a
         >
+        <% if (ticket.smsLink) { %>
+        <a class="button primary full sms-button" href="<%= ticket.smsLink %>"
+          >Notify by SMS</a
+        >
+        <% } %>
         <button
           class="button primary full"
           onclick="

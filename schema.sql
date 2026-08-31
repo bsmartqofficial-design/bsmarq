@@ -15,6 +15,42 @@ ALTER TABLE invitations ADD COLUMN IF NOT EXISTS counter_id UUID REFERENCES coun
 CREATE TABLE IF NOT EXISTS notifications (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id) ON DELETE CASCADE, ticket_id UUID REFERENCES queue_tickets(id) ON DELETE CASCADE, title VARCHAR(180) NOT NULL, message TEXT NOT NULL, read_at TIMESTAMPTZ, created_at TIMESTAMPTZ DEFAULT NOW());
 CREATE TABLE IF NOT EXISTS ai_insights (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE, title VARCHAR(180) NOT NULL, body TEXT NOT NULL, severity VARCHAR(20) DEFAULT 'info', created_at TIMESTAMPTZ DEFAULT NOW());
 CREATE TABLE IF NOT EXISTS activity_logs (id BIGSERIAL PRIMARY KEY, organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE, user_id UUID REFERENCES users(id) ON DELETE SET NULL, action VARCHAR(120) NOT NULL, metadata JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS community_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  name VARCHAR(180) NOT NULL,
+  location VARCHAR(180) DEFAULT 'Settlement / Community',
+  event_date DATE NOT NULL,
+  services JSONB DEFAULT '[]',
+  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS community_beneficiaries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  case_id VARCHAR(80) NOT NULL,
+  preferred_name VARCHAR(160) NOT NULL,
+  household_reference VARCHAR(120),
+  service_requested VARCHAR(160) NOT NULL,
+  queue_number VARCHAR(30),
+  priority_level VARCHAR(30) DEFAULT 'standard',
+  current_service VARCHAR(160),
+  status VARCHAR(30) DEFAULT 'waiting',
+  notes TEXT,
+  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS community_queue_audit (
+  id BIGSERIAL PRIMARY KEY,
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  beneficiary_id UUID REFERENCES community_beneficiaries(id) ON DELETE CASCADE,
+  action VARCHAR(120) NOT NULL,
+  details JSONB DEFAULT '{}',
+  staff_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 CREATE INDEX IF NOT EXISTS tickets_org_status_idx ON queue_tickets(organization_id, status);
 CREATE INDEX IF NOT EXISTS tickets_branch_service_idx ON queue_tickets(branch_id, service_id, joined_at);
 CREATE INDEX IF NOT EXISTS appointments_org_date_idx ON appointments(organization_id, starts_at);
+CREATE INDEX IF NOT EXISTS community_beneficiaries_org_idx ON community_beneficiaries(organization_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS community_events_org_idx ON community_events(organization_id, event_date DESC);

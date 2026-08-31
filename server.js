@@ -34,13 +34,23 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 const port = Number(process.env.PORT) || 3000;
+const appUrlHost = (process.env.APP_URL || process.env.PUBLIC_BASE_URL || process.env.HOST || 'http://localhost:3000')
+  .replace(/^https?:\/\//i, '')
+  .split(':')[0]
+  .toLowerCase();
+const isLocalhostDevelopment = ['localhost', '127.0.0.1', '0.0.0.0'].includes(appUrlHost);
+const useSecureCookies = process.env.NODE_ENV === 'production' && !isLocalhostDevelopment && process.env.SESSION_COOKIE_SECURE !== 'false';
 let databaseStatus = { connected: false, initialized: false, message: null };
 const sessionMiddleware = session({
   store: new pgSession({ pool, createTableIfMissing: true }),
   secret: process.env.SESSION_SECRET || 'bsmarq-development-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 86400000, secure: process.env.NODE_ENV === 'production' }
+  cookie: {
+    maxAge: 86400000,
+    secure: useSecureCookies,
+    sameSite: useSecureCookies ? 'none' : 'lax'
+  }
 });
 app.set('view engine', 'ejs');
 app.set('views', viewDir);
@@ -75,7 +85,7 @@ function getPortalProfile(type = '') {
     { match: ['telecom'], key: 'telecom', label: 'Telecom services portal', queueNoun: 'customer', focus: 'Service centre operations' },
     { match: ['restaurant', 'food'], key: 'hospitality', label: 'Hospitality services portal', queueNoun: 'guest', focus: 'Guest service operations' },
     { match: ['retail', 'supermarket'], key: 'retail', label: 'Retail services portal', queueNoun: 'customer', focus: 'Store operations' },
-    { match: ['ngo', 'non-government', 'charit'], key: 'ngo', label: 'NGO services portal', queueNoun: 'beneficiary', focus: 'Community programmes' },
+    { match: ['ngo', 'non-government', 'charit', 'community', 'refugee', 'humanitarian', 'settlement'], key: 'ngo', label: 'NGO services portal', queueNoun: 'beneficiary', focus: 'Community programmes' },
     { match: ['legal', 'law firm', 'lawfirm'], key: 'legal', label: 'Legal services portal', queueNoun: 'client', focus: 'Legal client services' },
     { match: ['post office', 'courier', 'postal', 'delivery'], key: 'logistics', label: 'Postal and courier portal', queueNoun: 'customer', focus: 'Delivery operations' }
   ];
@@ -102,8 +112,13 @@ app.post('/login', async (req, res) => {
       next: req.body.next || '/dashboard'
     });
     req.session.user = user;
-    if (user.role === 'super_admin') return res.redirect('/super-admin');
-    res.redirect(req.body.next || '/dashboard');
+    req.session.save((error) => {
+      if (error) {
+        return res.status(500).render('login', { error: 'Unable to sign in right now.', message: null, next: req.body.next || '/dashboard' });
+      }
+      if (user.role === 'super_admin') return res.redirect('/super-admin');
+      return res.redirect(req.body.next || '/dashboard');
+    });
   } catch (error) { res.status(500).render('login', { error: 'Unable to sign in right now.', message: null, next: req.body.next || '/dashboard' }); }
 });
 function logout(req, res) { req.session.destroy(() => res.redirect('/login')); }

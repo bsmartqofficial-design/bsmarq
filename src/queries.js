@@ -29,20 +29,31 @@ function servicesForType(type = '') {
   if (value.includes('government') || value.includes('embassy') || value.includes('consulate')) return [['Applications', 'APP'], ['Document collection', 'DOC'], ['Payments', 'PAY'], ['Information desk', 'INF']];
   if (value.includes('telecom')) return [['New connection', 'NEW'], ['Airtime and bundles', 'AIR'], ['Support', 'SUP'], ['Payments', 'PAY']];
   if (value.includes('retail') || value.includes('supermarket')) return [['Returns and exchanges', 'RET'], ['Customer service', 'CUS'], ['Payments', 'PAY'], ['Collections', 'COL']];
-  if (value.includes('ngo') || value.includes('non-government') || value.includes('charit')) return [['Recruitment', 'REC'], ['Beneficiary services', 'BEN'], ['Programme support', 'PRO'], ['Donor enquiries', 'DON']];
+  if (value.includes('ngo') || value.includes('non-government') || value.includes('charit') || value.includes('community') || value.includes('refugee') || value.includes('humanitarian') || value.includes('settlement')) return [['Registration', 'REG'], ['Verification', 'VER'], ['Documentation', 'DOC'], ['Paper assistance', 'PAP'], ['Health screening', 'HLT'], ['No ticket / human support', 'MAN'], ['Food assistance', 'FOOD'], ['Cash assistance', 'CASH'], ['Legal assistance', 'LEG'], ['Community support', 'COM']];
   if (value.includes('legal') || value.includes('law firm') || value.includes('lawfirm')) return [['Legal consultation', 'CON'], ['Case intake', 'CAS'], ['Document review', 'DOC'], ['Court filing', 'FIL']];
   if (value.includes('post office') || value.includes('courier') || value.includes('postal') || value.includes('delivery')) return [['Parcel drop-off', 'DRP'], ['Parcel collection', 'COL'], ['Post office services', 'POS'], ['Delivery support', 'SUP']];
   return [['General enquiries', 'GEN'], ['Payments', 'PAY'], ['Support', 'SUP']];
 }
 
+function normalizePhoneNumber(phone = '') {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('256')) return `+${digits}`;
+  if (digits.startsWith('0')) return `+256${digits.slice(1)}`;
+  return digits.startsWith('+') ? digits : `+${digits}`;
+}
+
 function formatTicket(row) {
+  const phone = normalizePhoneNumber(row.phone || row.customer_phone || '');
   return {
     number: row.ticket_number,
     customer: row.customer_name,
     service: row.service_name,
     status: row.status.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()),
     counter: row.counter_name || '—',
-    waited: row.joined_at ? `${Math.max(0, Math.floor((Date.now() - new Date(row.joined_at).getTime()) / 60000))} min` : 'Just now'
+    waited: row.joined_at ? `${Math.max(0, Math.floor((Date.now() - new Date(row.joined_at).getTime()) / 60000))} min` : 'Just now',
+    phone,
+    smsLink: phone ? `sms:${phone}?body=${encodeURIComponent('Hello BsmartQ, please notify me when my ticket is my turn.')}` : ''
   };
 }
 
@@ -272,7 +283,7 @@ async function loadDashboard(organizationId) {
   };
 }
 
-async function createTicket({ customerName, prefix, organizationId }) {
+async function createTicket({ customerName, prefix, organizationId, phone = '' }) {
   const context = await getContext(organizationId);
   const client = await pool.connect();
   try {
@@ -296,7 +307,7 @@ async function createTicket({ customerName, prefix, organizationId }) {
       [context.organization_id, context.branch_id, service.id, ticketNumber, customerName]
     );
     await client.query('COMMIT');
-    return formatTicket({ ...inserted.rows[0], service_name: service.name });
+    return formatTicket({ ...inserted.rows[0], service_name: service.name, phone });
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -319,6 +330,229 @@ async function getTicket(ticketNumber, organizationId) {
     WHERE t.ticket_number = $1 AND t.organization_id = $2 AND t.branch_id = $3
     LIMIT 1`, [ticketNumber, context.organization_id, context.branch_id]);
   return result.rows[0] ? { ...formatTicket(result.rows[0]), peopleAhead: result.rows[0].people_ahead } : null;
+}
+
+const communityServiceDefaults = [
+  'Registration',
+  'Verification',
+  'Documentation',
+  'Paper assistance',
+  'Health screening',
+  'No ticket / human support',
+  'Protection services',
+  'Food assistance',
+  'Cash assistance',
+  'Education support',
+  'Legal assistance',
+  'Community support'
+];
+
+async function getCommunityServices(organizationId) {
+  try {
+    const context = await getContext(organizationId);
+    const result = await pool.query(`
+      SELECT s.id, s.name, s.prefix, s.avg_duration_minutes, COUNT(t.id) FILTER (WHERE t.status = 'waiting')::int AS waiting_count
+      FROM services s
+      LEFT JOIN queue_tickets t ON t.service_id = s.id AND t.branch_id = $1
+      WHERE s.organization_id = $2 AND s.active = TRUE
+      GROUP BY s.id
+      ORDER BY s.created_at
+      LIMIT 12
+    `, [context.branch_id, context.organization_id]);
+    return result.rows.length ? result.rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      prefix: row.prefix,
+      avg_duration_minutes: row.avg_duration_minutes || 10,
+      waiting_count: Number(row.waiting_count || 0)
+    })) : communityServiceDefaults.map((name, index) => ({
+      id: `service-${index}`,
+      name,
+      prefix: name.slice(0, 3).toUpperCase(),
+      avg_duration_minutes: 10 + (index % 4) * 5,
+      waiting_count: 0
+    }));
+  } catch (error) {
+    return communityServiceDefaults.map((name, index) => ({
+      id: `service-${index}`,
+      name,
+      prefix: name.slice(0, 3).toUpperCase(),
+      avg_duration_minutes: 10 + (index % 4) * 5,
+      waiting_count: 0
+    }));
+  }
+}
+
+async function getCommunityModuleOverview(organizationId) {
+  try {
+    const context = await getContext(organizationId);
+    const [statsResult, servicesResult, recentResult] = await Promise.all([
+      pool.query(`
+        SELECT COUNT(*)::int AS total_registered,
+               COUNT(*) FILTER (WHERE status = 'waiting')::int AS waiting,
+               COUNT(*) FILTER (WHERE status = 'called')::int AS called,
+               COUNT(*) FILTER (WHERE status IN ('called', 'now_serving'))::int AS serving,
+               COUNT(*) FILTER (WHERE status = 'completed')::int AS completed,
+               COUNT(*) FILTER (WHERE status = 'cancelled')::int AS cancelled,
+               COUNT(*) FILTER (WHERE status = 'no_show')::int AS no_show,
+               COALESCE(ROUND(AVG(EXTRACT(EPOCH FROM (called_at - joined_at)) / 60)
+                 FILTER (WHERE called_at IS NOT NULL)), 0)::int AS avg_wait,
+               COALESCE(ROUND(AVG(EXTRACT(EPOCH FROM (completed_at - joined_at)) / 60)
+                 FILTER (WHERE completed_at IS NOT NULL)), 0)::int AS avg_service
+        FROM queue_tickets
+        WHERE organization_id = $1 AND branch_id = $2
+      `, [context.organization_id, context.branch_id]),
+      getCommunityServices(organizationId),
+      pool.query(`
+        SELECT t.ticket_number, t.customer_name, s.name AS service_name, t.status, t.joined_at
+        FROM queue_tickets t
+        JOIN services s ON s.id = t.service_id
+        WHERE t.organization_id = $1 AND t.branch_id = $2
+        ORDER BY t.joined_at DESC
+        LIMIT 8
+      `, [context.organization_id, context.branch_id])
+    ]);
+
+    const stats = statsResult.rows[0] || {};
+    const peopleRemaining = Math.max(0, Number(stats.waiting || 0) + Number(stats.called || 0));
+    return {
+      overviewLabel: 'Community outreach operations',
+      eventName: 'Community Medical Outreach',
+      location: context.branch_name || 'Settlement / Community',
+      date: new Date().toISOString().slice(0, 10),
+      totalRegistered: Number(stats.total_registered || 0),
+      waiting: Number(stats.waiting || 0),
+      called: Number(stats.called || 0),
+      serving: Number(stats.serving || 0),
+      completed: Number(stats.completed || 0),
+      cancelled: Number(stats.cancelled || 0),
+      noShow: Number(stats.no_show || 0),
+      averageWaitingMinutes: Number(stats.avg_wait || 0),
+      averageServiceMinutes: Number(stats.avg_service || 0),
+      peopleRemaining,
+      services: servicesResult,
+      recentQueue: recentResult.rows.map((row) => ({
+        number: row.ticket_number,
+        customer: row.customer_name,
+        service: row.service_name,
+        status: row.status,
+        joined_at: row.joined_at
+      }))
+    };
+  } catch (error) {
+    return {
+      overviewLabel: 'Community outreach operations',
+      eventName: 'Community Medical Outreach',
+      location: 'Settlement / Community',
+      date: new Date().toISOString().slice(0, 10),
+      totalRegistered: 0,
+      waiting: 0,
+      called: 0,
+      serving: 0,
+      completed: 0,
+      cancelled: 0,
+      noShow: 0,
+      averageWaitingMinutes: 0,
+      averageServiceMinutes: 0,
+      peopleRemaining: 0,
+      services: await getCommunityServices(organizationId),
+      recentQueue: []
+    };
+  }
+}
+
+async function createCommunityBeneficiary(organizationId, payload = {}) {
+  const context = await getContext(organizationId);
+  const normalizedName = String(payload.name || payload.customerName || 'Beneficiary').trim() || 'Beneficiary';
+  const caseId = String(payload.caseId || payload.beneficiaryId || `BEN-${Date.now()}`).trim() || `BEN-${Date.now()}`;
+  const serviceName = String(payload.service || 'Registration').trim() || 'Registration';
+  const priority = String(payload.priority || 'standard').trim() || 'standard';
+  const mode = String(payload.mode || payload.assistanceMode || 'ticket').trim().toLowerCase();
+  const isManualMode = ['manual', 'human', 'no-ticket', 'no_ticket', 'paper', 'paper-assistance', 'paper assistance', 'human support'].includes(mode)
+    || serviceName.toLowerCase().includes('paper assistance')
+    || serviceName.toLowerCase().includes('no ticket')
+    || serviceName.toLowerCase().includes('human support');
+
+  const serviceResult = await pool.query(
+    `SELECT id, name, prefix FROM services WHERE organization_id = $1 AND LOWER(name) LIKE '%' || LOWER($2) || '%' AND active = TRUE ORDER BY created_at LIMIT 1`,
+    [context.organization_id, serviceName]
+  );
+  const fallbackService = serviceResult.rows[0] || (await pool.query(
+    `SELECT id, name, prefix FROM services WHERE organization_id = $1 AND active = TRUE ORDER BY created_at LIMIT 1`,
+    [context.organization_id]
+  )).rows[0];
+
+  if (!fallbackService) {
+    return {
+      id: caseId,
+      name: normalizedName,
+      caseId,
+      service: serviceName,
+      queueNumber: isManualMode ? 'Manual intake' : 'N/A',
+      priority,
+      status: isManualMode ? 'Manual review' : 'Waiting',
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  if (isManualMode) {
+    return {
+      id: caseId,
+      name: normalizedName,
+      caseId,
+      service: serviceName,
+      queueNumber: 'Manual intake',
+      priority,
+      status: 'Manual review',
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  const ticket = await createTicket({ customerName: normalizedName, prefix: fallbackService.prefix, organizationId });
+  return {
+    id: caseId,
+    name: normalizedName,
+    caseId,
+    service: fallbackService.name || serviceName,
+    queueNumber: ticket.number,
+    priority,
+    status: 'Waiting',
+    createdAt: new Date().toISOString()
+  };
+}
+
+async function createCommunityEvent(organizationId, payload = {}) {
+  const eventName = String(payload.eventName || 'Community Medical Outreach').trim() || 'Community Medical Outreach';
+  const location = String(payload.location || 'Settlement / Community').trim() || 'Settlement / Community';
+  const date = String(payload.date || new Date().toISOString().slice(0, 10)).trim() || new Date().toISOString().slice(0, 10);
+  const services = Array.isArray(payload.services) && payload.services.length ? payload.services : communityServiceDefaults.slice(0, 4);
+
+  return {
+    id: `event-${Date.now()}`,
+    name: eventName,
+    location,
+    date,
+    services,
+    totalRegistered: 0,
+    waiting: 0,
+    serving: 0,
+    completed: 0
+  };
+}
+
+async function listCommunityEvents(organizationId) {
+  const overview = await getCommunityModuleOverview(organizationId);
+  return [{
+    id: `event-${Date.now()}`,
+    name: overview.eventName,
+    location: overview.location,
+    date: overview.date,
+    services: overview.services.slice(0, 4).map((service) => service.name),
+    totalRegistered: overview.totalRegistered,
+    waiting: overview.waiting,
+    serving: overview.serving,
+    completed: overview.completed
+  }];
 }
 
 async function callNext(counterName = 'Counter 04', organizationId) {
@@ -474,5 +708,11 @@ module.exports = {
   listUserNotifications,
   createSystemNotification,
   markNotificationsRead,
-  subscriptionPlans
+  subscriptionPlans,
+  getCommunityServices,
+  getCommunityModuleOverview,
+  createCommunityBeneficiary,
+  createCommunityEvent,
+  listCommunityEvents,
+  normalizePhoneNumber
 };
