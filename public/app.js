@@ -15,6 +15,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   const searchWrap = document.getElementById('searchWrap');
   const notificationPanel = document.getElementById('notificationPanel');
   const bookingForm = document.getElementById('bookingForm');
+  const bookingLinkForm = document.getElementById('bookingLinkForm');
 
   function updateGreeting() {
     const greetingTarget = document.querySelector('.intro h1');
@@ -25,9 +26,14 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     greetingTarget.innerHTML = `${label}, ${name} <span>✦</span>`;
   }
 
-  function announceTicket(ticketNumber, label = 'Now serving') {
+  function formatAnnouncementNumber(value) {
+    return String(value || '').replace(/^[A-Z]+-?/i, '').replace(/[^0-9]/g, '').padStart(3, '0');
+  }
+
+  function announceTicket(ticketNumber, counterName = '') {
     if (!ticketNumber || !('speechSynthesis' in window)) return;
-    const text = `${label} ${ticketNumber}`;
+    const counterText = counterName ? ` at ${counterName}` : '';
+    const text = `Ticket no ${formatAnnouncementNumber(ticketNumber)}${counterText}`;
     const speak = (value) => {
       const utterance = new SpeechSynthesisUtterance(value);
       utterance.lang = 'en-US';
@@ -70,7 +76,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     if (waitingCount) waitingCount.textContent = waiting;
     if (serving && currentTicket) currentTicket.textContent = serving.number;
     if (serving && window.lastServingTicket !== serving.number) {
-      announceTicket(serving.number, 'Now serving');
+      announceTicket(serving.number, serving.counter || serving.counter_name || 'Counter 1');
       window.lastServingTicket = serving.number;
     }
     if (window.trackedTicket) {
@@ -107,7 +113,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     const response = await fetch('/api/tickets/next', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ counter: callNext.dataset.counter || 'Counter 04' }) });
     const ticket = await response.json();
     if (ticket.number && currentTicket) currentTicket.textContent = ticket.number;
-    if (ticket.number) announceTicket(ticket.number, 'Now serving');
+    if (ticket.number) announceTicket(ticket.number, ticket.counter_name || ticket.counter || callNext.dataset.counter || 'Counter 1');
     callNext.disabled = false;
     callNext.innerHTML = '⌁ &nbsp; Call next customer';
   });
@@ -118,6 +124,33 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     if (searchWrap) searchWrap.classList.toggle('hidden');
     if (!searchWrap.classList.contains('hidden') && dashboardSearch) dashboardSearch.focus();
   });
+  if (bookingLinkForm) {
+    bookingLinkForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const formData = new FormData(bookingLinkForm);
+      const purpose = String(formData.get('purpose') || '').trim() || 'Service support';
+      const baseUrl = `${window.location.origin}/join?organizationId=${encodeURIComponent(window.organizationId || '')}`;
+      const generatedUrl = `${baseUrl}&purpose=${encodeURIComponent(purpose)}`;
+      const output = document.getElementById('bookingLinkOutput');
+      if (output) {
+        output.innerHTML = `
+          <label>
+            <span>Client booking link</span>
+            <input type="text" value="${generatedUrl}" readonly />
+          </label>
+          <button type="button" class="button secondary" data-copy-link="${generatedUrl}">Copy link</button>
+        `;
+        const copyButton = output.querySelector('[data-copy-link]');
+        if (copyButton) {
+          copyButton.addEventListener('click', async () => {
+            await navigator.clipboard.writeText(copyButton.dataset.copyLink);
+            copyButton.textContent = 'Link copied';
+          });
+        }
+      }
+    });
+  }
+
   if (bookingForm) {
     bookingForm.addEventListener('submit', async (event) => {
       event.preventDefault();

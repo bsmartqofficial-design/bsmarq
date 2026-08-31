@@ -36,7 +36,7 @@
             <span>Workspace</span><b>/</b><strong><%= page %></strong>
           </div>
           <div class="top-actions">
-            <a class="button secondary topbar-update-button" href="/updates">✦ BsmartQ update 30 min</a>
+            <a class="button secondary topbar-update-button" href="/updates">✦ Update</a>
           </div>
         </header>
 
@@ -55,17 +55,25 @@
             <div class="panel-head">
               <div>
                 <h3>Booking overview</h3>
-                <p>Customers can pre-book and receive queue updates.</p>
+                <p>Generate a clean customer booking link for your service desk.</p>
               </div>
             </div>
-            <form class="booking-form" id="bookingForm">
+            <form class="booking-form" id="bookingLinkForm">
               <label>
                 <span>Booking title</span>
-                <input type="text" name="title" value="Booking available" />
+                <input type="text" name="title" value="Book your appointment" />
               </label>
               <label>
-                <span>Booking message</span>
-                <textarea name="message" rows="4">Customers can now book their appointment from home. Please contact the service desk or scan the booking link for confirmation.</textarea>
+                <span>Purpose of visit</span>
+                <input type="text" name="purpose" value="Account opening" placeholder="e.g. Account opening, loan support, document check" />
+              </label>
+              <button type="submit" class="button primary">Generate a booking link</button>
+              <div id="bookingLinkOutput" class="booking-link-output"></div>
+            </form>
+            <form class="booking-form" id="bookingForm">
+              <label>
+                <span>Customer update message</span>
+                <textarea name="message" rows="4">Your appointment booking is available online. Share the generated booking link with customers so they can add their name and the purpose of their visit.</textarea>
               </label>
               <button type="submit" class="button primary">Send booking update</button>
               <div id="bookingStatus" class="booking-status"></div>
