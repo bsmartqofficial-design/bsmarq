@@ -75,9 +75,10 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     const serving = queue.find((ticket) => ticket.status.includes('Serving') || ticket.status.includes('serving'));
     if (waitingCount) waitingCount.textContent = waiting;
     if (serving && currentTicket) currentTicket.textContent = serving.number;
-    if (serving && window.lastServingTicket !== serving.number) {
+    if (window.lastServingTicket !== serving?.number && window.manualAnnouncementRequested) {
       announceTicket(serving.number, serving.counter || serving.counter_name || 'Counter 1');
       window.lastServingTicket = serving.number;
+      window.manualAnnouncementRequested = false;
     }
     if (window.trackedTicket) {
       const tracked = queue.find((ticket) => ticket.number === window.trackedTicket);
@@ -113,7 +114,10 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     const response = await fetch('/api/tickets/next', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ counter: callNext.dataset.counter || 'Counter 04' }) });
     const ticket = await response.json();
     if (ticket.number && currentTicket) currentTicket.textContent = ticket.number;
-    if (ticket.number) announceTicket(ticket.number, ticket.counter_name || ticket.counter || callNext.dataset.counter || 'Counter 1');
+    if (ticket.number) {
+      window.manualAnnouncementRequested = true;
+      announceTicket(ticket.number, ticket.counter_name || ticket.counter || callNext.dataset.counter || 'Counter 1');
+    }
     callNext.disabled = false;
     callNext.innerHTML = '⌁ &nbsp; Call next customer';
   });

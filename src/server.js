@@ -189,14 +189,13 @@ app.get('/booking', requireStaff, async (req, res, next) => {
 app.get('/updates', requireStaff, async (req, res, next) => {
   try {
     const demo = await queries.loadDashboard(req.session.user.organization_id);
-    const updateMessage = 'BsmartQ update: This system refresh will be completed within 30 minutes. Customers will be informed once the queue service is available again.';
     res.render('updates', {
       user: req.session.user,
       demo,
       portal: getPortalProfile(demo.organization.type),
       title: 'System update',
       page: 'System update',
-      updateMessage
+      updateMessage: 'System maintenance is scheduled. Please continue with normal queue operations.'
     });
   } catch (error) { next(error); }
 });
