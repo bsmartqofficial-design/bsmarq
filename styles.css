@@ -607,6 +607,15 @@ a {
   color: #53635c;
   font-size: 11px;
 }
+.topbar-update-button {
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-size: 11px;
+  background: #eefaf1;
+  border: 1px solid #cfead9;
+  color: var(--deep);
+  text-decoration: none;
+}
 .menu-toggle {
   display: none;
 }
@@ -1295,30 +1304,28 @@ select {
   color: var(--green) !important;
   font-size: 12px !important;
 }
-.admin-quick-panel {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(220px, 1fr));
-  gap: 18px;
-  margin: 8px 0 28px;
-  padding: 18px;
+.booking-panel,
+.update-panel {
+  padding: 22px;
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 18px;
   box-shadow: var(--shadow);
 }
-.admin-action-form {
+.booking-form {
   display: grid;
-  gap: 12px;
+  gap: 16px;
+  margin-top: 18px;
 }
-.admin-action-form label {
+.booking-form label {
   display: grid;
   gap: 8px;
   font-size: 12px;
   font-weight: 700;
   color: var(--deep);
 }
-.admin-action-form input,
-.admin-action-form textarea {
+.booking-form input,
+.booking-form textarea {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -1326,9 +1333,28 @@ select {
   font: inherit;
   resize: vertical;
 }
-.admin-action-form.alternate {
-  border-left: 1px solid var(--line);
-  padding-left: 18px;
+.booking-status {
+  min-height: 18px;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 700;
+}
+.update-message-box {
+  margin-top: 18px;
+  background: #f5faf6;
+  border: 1px solid #dceee1;
+  border-radius: 14px;
+  padding: 22px;
+}
+.update-message-box strong {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--deep);
+}
+.update-message-box p {
+  margin: 0;
+  color: #4b5f57;
+  line-height: 1.6;
 }
 .display-page {
   background: #0b2419;

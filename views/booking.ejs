@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BsmartQ | Booking</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="portal-<%= portal.key %>">
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <img class="brand-logo" src="/images/file_00000000c0ec81f48652b42d6ca52a4d.png" alt="BsmartQ">
+        </div>
+        <div class="workspace">
+          <span class="avatar emerald"><%= demo.organization.name.slice(0, 1).toUpperCase() %></span>
+          <div>
+            <b><%= demo.organization.name %></b>
+            <small><%= portal.label %></small>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <nav>
+          <p class="nav-label">Workspace</p>
+          <a href="/"><span>⌂</span> Overview</a>
+          <a class="active" href="/booking"><span>◌</span> Booking</a>
+          <a href="/staff"><span>♧</span> Staff & counters</a>
+          <a href="/display?organizationId=<%= demo.organization.id %>" target="_blank"><span>⌁</span> QR codes</a>
+        </nav>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <button class="icon-btn menu-toggle" id="menuToggle">☰</button>
+          <div class="breadcrumbs">
+            <span>Workspace</span><b>/</b><strong><%= page %></strong>
+          </div>
+          <div class="top-actions">
+            <a class="button secondary topbar-update-button" href="/updates">✦ BsmartQ update 30 min</a>
+          </div>
+        </header>
+
+        <section class="content">
+          <div class="intro">
+            <div>
+              <p class="eyebrow">Booking portal</p>
+              <h1>Manage booking</h1>
+            </div>
+            <div class="intro-actions">
+              <a class="button primary" href="/join?organizationId=<%= demo.organization.id %>">+ Join booking queue</a>
+            </div>
+          </div>
+
+          <div class="panel booking-panel">
+            <div class="panel-head">
+              <div>
+                <h3>Booking overview</h3>
+                <p>Customers can pre-book and receive queue updates.</p>
+              </div>
+            </div>
+            <form class="booking-form" id="bookingForm">
+              <label>
+                <span>Booking title</span>
+                <input type="text" name="title" value="Booking available" />
+              </label>
+              <label>
+                <span>Booking message</span>
+                <textarea name="message" rows="4">Customers can now book their appointment from home. Please contact the service desk or scan the booking link for confirmation.</textarea>
+              </label>
+              <button type="submit" class="button primary">Send booking update</button>
+              <div id="bookingStatus" class="booking-status"></div>
+            </form>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

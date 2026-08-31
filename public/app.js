@@ -14,11 +14,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   const dashboardSearch = document.getElementById('dashboardSearch');
   const searchWrap = document.getElementById('searchWrap');
   const notificationPanel = document.getElementById('notificationPanel');
-  const systemUpdateButton = document.getElementById('systemUpdateButton');
-  const homeInviteButton = document.getElementById('homeInviteButton');
-  const adminQuickPanel = document.getElementById('adminQuickPanel');
-  const systemUpdateForm = document.getElementById('systemUpdateForm');
-  const homeInviteForm = document.getElementById('homeInviteForm');
+  const bookingForm = document.getElementById('bookingForm');
 
   function updateGreeting() {
     const greetingTarget = document.querySelector('.intro h1');
@@ -122,42 +118,11 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     if (searchWrap) searchWrap.classList.toggle('hidden');
     if (!searchWrap.classList.contains('hidden') && dashboardSearch) dashboardSearch.focus();
   });
-  if (systemUpdateButton && adminQuickPanel) {
-    systemUpdateButton.addEventListener('click', () => {
-      adminQuickPanel.classList.toggle('hidden');
-      systemUpdateForm?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    });
-  }
-  if (homeInviteButton && adminQuickPanel) {
-    homeInviteButton.addEventListener('click', () => {
-      adminQuickPanel.classList.toggle('hidden');
-      homeInviteForm?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    });
-  }
-  if (systemUpdateForm) {
-    systemUpdateForm.addEventListener('submit', async (event) => {
+  if (bookingForm) {
+    bookingForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const formData = new FormData(systemUpdateForm);
-      const title = String(formData.get('title') || '').trim();
-      const message = String(formData.get('message') || '').trim();
-      if (!message) return;
-      const response = await fetch('/api/system-update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, message })
-      });
-      const data = await response.json();
-      if (data.success) {
-        systemUpdateForm.reset();
-        adminQuickPanel.classList.add('hidden');
-      }
-    });
-  }
-  if (homeInviteForm) {
-    homeInviteForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const formData = new FormData(homeInviteForm);
-      const title = String(formData.get('title') || '').trim();
+      const formData = new FormData(bookingForm);
+      const title = String(formData.get('title') || '').trim() || 'Booking available';
       const message = String(formData.get('message') || '').trim();
       if (!message) return;
       const response = await fetch('/api/home-booking-invite', {
@@ -167,8 +132,9 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       });
       const data = await response.json();
       if (data.success) {
-        homeInviteForm.reset();
-        adminQuickPanel.classList.add('hidden');
+        bookingForm.reset();
+        const statusMessage = document.getElementById('bookingStatus');
+        if (statusMessage) statusMessage.textContent = 'Booking update sent successfully.';
       }
     });
   }

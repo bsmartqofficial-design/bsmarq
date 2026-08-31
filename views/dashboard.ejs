@@ -84,6 +84,7 @@
           <p class="nav-label">Manage</p>
           <a href="#queues"><span>▦</span> Services & activities</a
           ><a href="/staff"><span>♧</span> Staff & counters</a
+          ><a href="/booking"><span>◌</span> Booking</a
           ><a href="/display?organizationId=<%= demo.organization.id %>" target="_blank"><span>⌁</span> QR codes</a
           ><a href="#ai"><span>▥</span> Reports</a
           ><a href="#ai"><span>✦</span> BsmartQ AI <em>NEW</em></a>
@@ -115,8 +116,9 @@
             <div class="search-wrap hidden" id="searchWrap">
               <input id="dashboardSearch" type="search" placeholder="Search queue or staff..." aria-label="Search" />
             </div>
-            <button class="icon-btn" id="searchToggle" title="Search">⌕</button
-            ><div class="notification-wrapper">
+            <button class="icon-btn" id="searchToggle" title="Search">⌕</button>
+            <a class="button secondary topbar-update-button" href="/updates" id="systemUpdateButton">✦ BsmartQ update 30 min</a>
+            <div class="notification-wrapper">
               <button class="icon-btn notification updates-button" id="notificationToggle" title="System updates">
                 Updates
                 <% if (Array.isArray(notifications) && notifications.length) { %><span class="notification-dot" aria-label="Unread updates"></span><% } %>
@@ -157,8 +159,6 @@
               </p>
             </div>
             <div class="intro-actions">
-              <button class="button secondary" type="button" id="systemUpdateButton">✦ System update</button>
-              <button class="button primary" type="button" id="homeInviteButton">🏠 Invite home booking</button>
               <a
                 class="button secondary"
                 href="/display?organizationId=<%= demo.organization.id %>"
@@ -170,30 +170,6 @@
                 >+ Join a queue</a
               >
             </div>
-          </div>
-          <div class="admin-quick-panel hidden" id="adminQuickPanel">
-            <form id="systemUpdateForm" class="admin-action-form">
-              <label>
-                <span>Update title</span>
-                <input type="text" name="title" value="Service update" />
-              </label>
-              <label>
-                <span>Message</span>
-                <textarea name="message" rows="3" placeholder="Share a customer service update..."></textarea>
-              </label>
-              <button type="submit" class="button primary">Save update</button>
-            </form>
-            <form id="homeInviteForm" class="admin-action-form alternate">
-              <label>
-                <span>Home booking message</span>
-                <input type="text" name="title" value="Home booking available" />
-              </label>
-              <label>
-                <span>Invite details</span>
-                <textarea name="message" rows="3">Customers can now book their appointment from home. Visit the booking link or contact the desk for details.</textarea>
-              </label>
-              <button type="submit" class="button secondary">Send home booking invite</button>
-            </form>
           </div>
           <div class="stat-grid">
             <article class="stat-card">

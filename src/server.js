@@ -174,6 +174,32 @@ app.get('/', requireStaff, async (req, res, next) => {
   } catch (error) { next(error); }
 });
 app.get('/dashboard', requireStaff, (req, res) => res.redirect('/'));
+app.get('/booking', requireStaff, async (req, res, next) => {
+  try {
+    const demo = await queries.loadDashboard(req.session.user.organization_id);
+    res.render('booking', {
+      user: req.session.user,
+      demo,
+      portal: getPortalProfile(demo.organization.type),
+      title: 'Booking',
+      page: 'Booking'
+    });
+  } catch (error) { next(error); }
+});
+app.get('/updates', requireStaff, async (req, res, next) => {
+  try {
+    const demo = await queries.loadDashboard(req.session.user.organization_id);
+    const updateMessage = 'BsmartQ update: This system refresh will be completed within 30 minutes. Customers will be informed once the queue service is available again.';
+    res.render('updates', {
+      user: req.session.user,
+      demo,
+      portal: getPortalProfile(demo.organization.type),
+      title: 'System update',
+      page: 'System update',
+      updateMessage
+    });
+  } catch (error) { next(error); }
+});
 app.get('/community', requireStaff, async (req, res, next) => {
   try {
     const demo = await queries.loadDashboard(req.session.user.organization_id);

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BsmartQ | System update</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="portal-<%= portal.key %>">
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <img class="brand-logo" src="/images/file_00000000c0ec81f48652b42d6ca52a4d.png" alt="BsmartQ">
+        </div>
+        <div class="workspace">
+          <span class="avatar emerald"><%= demo.organization.name.slice(0, 1).toUpperCase() %></span>
+          <div>
+            <b><%= demo.organization.name %></b>
+            <small><%= portal.label %></small>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <nav>
+          <p class="nav-label">Workspace</p>
+          <a href="/"><span>⌂</span> Overview</a>
+          <a href="/booking"><span>◌</span> Booking</a>
+          <a href="/staff"><span>♧</span> Staff & counters</a>
+          <a href="/display?organizationId=<%= demo.organization.id %>" target="_blank"><span>⌁</span> QR codes</a>
+        </nav>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <button class="icon-btn menu-toggle" id="menuToggle">☰</button>
+          <div class="breadcrumbs">
+            <span>Workspace</span><b>/</b><strong><%= page %></strong>
+          </div>
+          <div class="top-actions">
+            <a class="button secondary topbar-update-button" href="/updates">✦ BsmartQ update 30 min</a>
+          </div>
+        </header>
+
+        <section class="content">
+          <div class="intro">
+            <div>
+              <p class="eyebrow">System notice</p>
+              <h1>Service update</h1>
+            </div>
+          </div>
+
+          <div class="panel update-panel">
+            <div class="panel-head">
+              <div>
+                <h3>BsmartQ update</h3>
+                <p>Queue service information for staff and customers.</p>
+              </div>
+            </div>
+            <div class="update-message-box">
+              <strong>30-minute update</strong>
+              <p><%= updateMessage %></p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
